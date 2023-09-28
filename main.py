@@ -3,8 +3,8 @@ import sys
 import Bio.SeqIO
 import Bio.SeqIO.FastaIO
 import Bio.SeqIO.QualityIO
-import Grinder
-import arguments
+from Grinder import Grinder
+
 
 
 
@@ -12,6 +12,7 @@ def grinder(*args):
     # Create Grinder object (assuming a Grinder class exists)
     factory = Grinder(*args)
 
+def temp():
     # Print diversity and percent shared and permuted
     diversity_report(
         factory.num_libraries,
@@ -122,9 +123,7 @@ def diversity_report(num_libraries, perc_shared, perc_permuted, overall_diversit
     return 1
 
 def main():
-    parser = arguments.create_parser()
-    args = parser.parse_args()
-    print("Arguments in my code:{}".format(args))
+    grinder(*sys.argv[1:])
 
 if __name__ == '__main__':
     main()

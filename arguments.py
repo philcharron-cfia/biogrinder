@@ -53,7 +53,7 @@ def create_parser():
     shot_amp_params.add_argument(
         '-rd', '--read_dist', 
         nargs='+',
-        default=100, 
+        default=['100'], 
         help=textwrap.dedent('''\
             Desired shotgun or amplicon read length distribution specified as:
             average length, distribution ('uniform' or 'normal') and standard
@@ -66,7 +66,7 @@ def create_parser():
     shot_amp_params.add_argument(
         '-id', '--insert_dist', 
         nargs='+',
-        default=0, 
+        default=['0'], 
         help=textwrap.dedent('''\
             Create paired-end or mate-pair reads spanning the given insert
             length. Important: the insert is defined in the biological sense,
@@ -337,7 +337,7 @@ def create_parser():
         '-di', '--diversity', 
         type=check_int_positive_with_0,
         nargs='+',
-        default=0,
+        default=['0'],
         help=textwrap.dedent('''\
             This option specifies alpha diversity, specifically the richness,
             i.e. number of reference sequences to take randomly and include in
@@ -393,6 +393,7 @@ def create_parser():
         '-ql', '--qual_levels', 
         type=check_int_positive_with_0,
         nargs='+',
+        default=[None, None],
         help=textwrap.dedent('''\
             Generate basic quality scores for the simulated reads. Good
             residues are given a specified good score (e.g. 30) and residues
@@ -435,10 +436,11 @@ def create_parser():
         help=textwrap.dedent('''\
             A file that contains Grinder arguments. This is useful if you use
             many options or often use the same options. Lines with comments (#)
-            are ignored. Consider the profile file, 'simple_profile.txt':
+            are ignored. Arguments must use the full length name. Consider the
+            profile file, 'simple_profile.txt':
                 # A simple Grinder profile
-                --read_dist 105 normal 12
-                --total_reads 1000
+                read_dist 105 normal 12
+                total_reads 1000
             Running: grinder -reference_file viral_genomes.fa -profile_file 
                 simple_profile.txt
             Translates into: grinder -reference_file viral_genomes.fa
