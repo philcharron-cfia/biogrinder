@@ -146,7 +146,7 @@ def create_parser():
                 - -1 (reverse)
             Use <unidirectional> = 1 for amplicon and strand-specific
             transcriptomic or proteomic datasets.
-            Default: %(default)i''')
+            Default: %(default)s''')
     )
     shot_amp_params.add_argument(
         '-lb', '--length_bias', 
@@ -211,7 +211,7 @@ def create_parser():
     seq_error_params.add_argument(
         '-mr', '--mutation_ratio', 
         nargs='+',
-        type=check_float_positive,
+        type=check_float_positive_with_0,
         default=[80, 20],
         help=textwrap.dedent('''\
             Indicate the percentage of substitutions and the number of indels
@@ -345,7 +345,7 @@ def create_parser():
             number of reference sequences available). Provide one value to make
             all libraries have the same diversity, or one richness value per
             library otherwise.
-            Default: %(default)i''')    
+            Default: %(default)s''')    
     )
     diversity_params.add_argument(
         '-sp', '--shared_perc', 
@@ -393,7 +393,7 @@ def create_parser():
         '-ql', '--qual_levels', 
         type=check_int_positive_with_0,
         nargs='+',
-        default=[None, None],
+        default=[ ],
         help=textwrap.dedent('''\
             Generate basic quality scores for the simulated reads. Good
             residues are given a specified good score (e.g. 30) and residues
@@ -456,9 +456,21 @@ def check_int_positive(value):
         raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
     return ivalue
 
+def check_int_positive_with_0(value):
+    ivalue = int(value)
+    if ivalue < 0:
+        raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
+    return ivalue
+
 def check_float_positive(value):
     fvalue = float(value)
     if fvalue <= 0:
+        raise argparse.ArgumentTypeError("%s is an invalid positive float value" % value)
+    return fvalue
+
+def check_float_positive_with_0(value):
+    fvalue = float(value)
+    if fvalue < 0:
         raise argparse.ArgumentTypeError("%s is an invalid positive float value" % value)
     return fvalue
 
@@ -474,8 +486,4 @@ def check_chimera_kmer(value):
         raise argparse.ArgumentTypeError("%s must be 0 or more than 1" % value)
     return ivalue
 
-def check_int_positive_with_0(value):
-    ivalue = int(value)
-    if ivalue < 0:
-        raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
-    return ivalue
+
