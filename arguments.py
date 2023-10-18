@@ -123,13 +123,27 @@ def create_parser():
         type=str,
         help=textwrap.dedent('''\
             Use DNA amplicon sequencing using a forward and reverse PCR primer
-            sequence provided in a FASTA file. The reference sequences and 
-            their reverse complement will be searched for PCR primer matches.
-            The primer sequences should use the IUPAC convention for degenerate
-            residues and the reference sequences that do not match the specified
-            primers are excluded. If your reference sequences are full genomes,
-            it is recommended to use <copy_bias> = 1 and <length_bias> = 0 to 
-            generate amplicon reads.''')
+            sequence provided in a FASTA file. Multiple primer pairs can be 
+            provided as long as they all have a matching pair. Primers are 
+            entered on new lines using the following format:
+                >1392F
+                ACGGGCGGTGTGTRCAGCCA
+                >926R
+                AAACTYAAAKGAATTGRCGG
+            The reference sequences and their reverse complement will be
+            searched for PCR primer matches. The primer sequences should use the
+            IUPAC convention for degenerate residues and the reference sequences
+            that do not match the specified primers are excluded. If your
+            reference sequences are full genomes, it is recommended to use
+            <copy_bias> = 1 and <length_bias> = 0 to generate amplicon reads.''')
+    )
+    shot_amp_params.add_argument(
+        '-ml', '--maximum_length', 
+        type=int,
+        default=10000,
+        help=textwrap.dedent('''\
+            When using DNA amplicon sequencing, provide a maximum legnth for
+            amplicon size in bp.''')
     )
     shot_amp_params.add_argument(
         '-un', '--unidirectional', 
