@@ -4,7 +4,7 @@ import textwrap
 # Create an ArgumentParser object
 def create_parser():
     parser = argparse.ArgumentParser(
-        description='''Grinder: Simulate metagenomic and metatranscriptomic
+        description='''Biogrinder: Simulate metagenomic and metatranscriptomic
         reads.''',
         formatter_class=argparse.RawTextHelpFormatter
     )
@@ -101,7 +101,7 @@ def create_parser():
         help=textwrap.dedent('''\
             Do not create reads containing any of the specified characters
             (case insensitive). For example, use 'NX' to prevent reads with
-            ambiguities (N or X). Grinder will error if it fails to find a
+            ambiguities (N or X). Biogrinder will error if it fails to find a
             suitable read (or pair of reads) after 10 attempts. Consider using 
             <delete_chars>, which may be more appropriate for your case.
             Default: %(default)s''')
@@ -351,7 +351,7 @@ def create_parser():
         '-di', '--diversity', 
         type=check_int_positive_with_0,
         nargs='+',
-        default=['0'],
+        default=[0],
         help=textwrap.dedent('''\
             This option specifies alpha diversity, specifically the richness,
             i.e. number of reference sequences to take randomly and include in
@@ -430,7 +430,7 @@ def create_parser():
     misc_params.add_argument(
         '-bn', '--base_name', 
         type=str,
-        default='grinder',
+        default='biogrinder',
         help=textwrap.dedent('''\
             Prefix of the output files.
             Default: %(default)s''')    
@@ -448,16 +448,16 @@ def create_parser():
         '-pf', '--profile_file', 
         type=str,
         help=textwrap.dedent('''\
-            A file that contains Grinder arguments. This is useful if you use
+            A file that contains Biogrinder arguments. This is useful if you use
             many options or often use the same options. Lines with comments (#)
             are ignored. Arguments must use the full length name. Consider the
             profile file, 'simple_profile.txt':
-                # A simple Grinder profile
+                # A simple Biogrinder profile
                 read_dist 105 normal 12
                 total_reads 1000
-            Running: grinder -reference_file viral_genomes.fa -profile_file 
+            Running: biogrinder -reference_file viral_genomes.fa -profile_file 
                 simple_profile.txt
-            Translates into: grinder -reference_file viral_genomes.fa
+            Translates into: biogrinder -reference_file viral_genomes.fa
                 --read_dist 105 normal 12 --total_reads 1000
             Note that the arguments specified in the profile should not be
             specified again on the command line.''')    
