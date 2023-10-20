@@ -24,6 +24,8 @@ def biogrinder(*args):
             raise OSError("Error: Could not create output folder "
                           f"{factory.output_dir}\n{e}")
         
+    print(factory.read_model)
+        
 
 def main():
     biogrinder(*sys.argv[1:])

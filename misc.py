@@ -1,33 +1,29 @@
 import random
 import math
 
-def is_int( value):
+def is_int(value):
     try:
-        int(value)
-        return True
+        value = int(value)
+        return value
     except ValueError:
-        print(f"Error: {value} is not an integer.")
-        return False
+        raise ValueError(f"{value} is not an integer.")
     
-def is_float( value):
+def is_float(value):
     try:
-        float(value)
-        return True
+        value = float(value)
+        return value
     except ValueError:
-        print(f"Error: {value} is not a float.")
-        return False
+        raise ValueError(f"{value} is not a float.")
 
 class OptionNotFoundError(Exception):
     pass
 
 def is_option(value, options):
-    try:
-        if value not in options:
-            raise OptionNotFoundError(f"Error: {value} is not in {options}.")
-        else:
-            return ValueError
-    except OptionNotFoundError as e:
-        print(e)
+    if value not in options:
+        raise OptionNotFoundError(f"{value} is not in {options}.")
+    else:
+        return value
+     
 
 def normalize(arr, total):
     # Normalize an arrayref to 1.

@@ -15,9 +15,9 @@ class Biogrinder:
     def __init__(self, *args):
         # Initialize the Biogrinder object with any necessary parameters
         self.args = args
-        self.parsed_args = self.argparse()
+        self.args = self.argparse()
         self.initialize()
-        #print(self.parsed_args)  
+        print(self.args)  
 
     def argparse(self):
         """
@@ -27,6 +27,10 @@ class Biogrinder:
         args = parser.parse_args(self.args)    
         if args.profile_file:
             self.process_profile_file(args)
+        else:
+            # Set instance attributes from parsed arguments
+            for arg, value in vars(args).items():
+                setattr(self, arg, value)
         return args 
     
     def community_calculate_amplicon_abundance(self, r_spp_abs, r_spp_ids, seq_ids):
@@ -591,33 +595,31 @@ class Biogrinder:
         return seq_obj
     
     def initialize(self):
-        self.args = self.parsed_args
         # Parameter processing - read_dist  
-        self.split_list('read_dist', 'read_length', 0, 100, 'int', None)
-        self.split_list('read_dist', 'read_model', 1, 'uniform', 'str', ['uniform', 'normal'])
-        self.split_list('read_dist', 'read_delta', 2, 0, 'int', None)
-        delattr(self.args, 'read_dist')
+        self.read_length = is_int(self.read_dist[0] if len(self.read_dist) > 0 else 100)
+        self.read_model = is_option(self.read_dist[1] if len(self.read_dist) > 1 else 'uniform',
+                                    ['uniform', 'normal'])
+        self.read_delta = is_int(self.read_dist[2] if len(self.read_dist) > 2 else 0)
 
         # Parameter processing - insert_dist
-        self.split_list('insert_dist', 'mate_length', 0, 0, 'int', None)
-        self.split_list('insert_dist', 'mate_model', 1, 'uniform', 'str', ['uniform', 'normal'])
-        self.split_list('insert_dist', 'mate_delta', 2, 0, 'int', None)
-        delattr(self.args, 'insert_dist')
+        self.mate_length = is_int(self.insert_dist[0] if len(self.insert_dist) > 0 else 0)
+        self.mate_model = is_option(self.insert_dist[1] if len(self.insert_dist) > 1 else 'uniform',
+                                    ['uniform', 'normal'])
+        self.mate_length = is_int(self.insert_dist[2] if len(self.insert_dist) > 2 else 0)
 
         # Parameter processing - abundance_model
-        self.split_list('abundance_model', 'distrib', 0, 'uniform', 'str',
-                        ['uniform','linear','powerlaw','logarithmic','exponential'])
-        self.split_list('abundance_model', 'param', 1,  1, 'float', None)
-        delattr(self.args, 'abundance_model')
+        self.distrib = is_option(self.abundance_model[0] if len(self.abundance_model) > 0 else 'uniform',
+                                    ['uniform','linear','powerlaw','logarithmic','exponential'])
+        self.param = is_float(self.abundance_model[1] if len(self.abundance_model) > 1 else 1)
 
         # Parameter processing - mutation_dist
-        self.split_list('mutation_dist', 'mutation_model', 0, 0, 'str', ['uniform','linear','poly4'])
-        self.split_list('mutation_dist', 'mutation_para1', 1, 0, 'int', None)
-        self.split_list('mutation_dist', 'mutation_para2', 2, 0, 'int', None)
-        delattr(self.args, 'mutation_dist')
+        self.mutation_model = is_option(self.mutation_dist[0] if len(self.mutation_dist) > 0 else 'uniform',
+                                        ['uniform','linear','poly4'])
+        self.mutation_para1 = is_int(self.mutation_dist[1] if len(self.mutation_dist) > 1 else 0)
+        self.mutation_para2 = is_int(self.mutation_dist[2] if len(self.mutation_dist) > 2 else 0)
+        
 
         # Parameter processing - mutation_ratio
-        self.mutation_ratio = getattr(self.args, 'mutation_ratio', [])
         self.mutation_ratio.append(0) if len(self.mutation_ratio) == 1 else self.mutation_ratio[1]
         self.mutation_ratio_sum = self.mutation_ratio[0] + self.mutation_ratio[1]
         if self.mutation_ratio_sum == 0:
@@ -627,8 +629,6 @@ class Biogrinder:
             self.mutation_ratio[1] = round(self.mutation_ratio[1] * 100 / self.mutation_ratio_sum, 1)
         
         # Parameter processing - chimera_dist
-        self.chimera_dist = getattr(self.args, 'chimera_dist', [])
-        self.chimera_perc = getattr(self.args, 'chimera_perc', [])
         self.chimera_dist_total = sum(self.chimera_dist)
         if self.chimera_dist_total == 0:
             self.chimera_dist = None
@@ -637,27 +637,18 @@ class Biogrinder:
             # Calculate cdf
             if self.chimera_perc:
                 self.chimera_dist_cdf = proba_cumul(self.chimera_dist)
-                setattr(self.args, 'chimera_dist_cdf', self.chimera_dist_cdf) 
-        setattr(self.args, 'chimera_dist', self.chimera_dist) 
 
         # Parameter processing - fastq_output required qual_levels
-        self.fastq_output = getattr(self.args, 'fastq_output', [])
-        self.qual_levels = getattr(self.args, 'qual_levels', [])
         if self.fastq_output and (not self.qual_levels or len(self.qual_levels) == 0):
             raise ValueError("Error: <qual_levels> needs to be specified to output FASTQ reads")
         
         # Random number generator: seed or be auto-seeded
-        self.random_seed = getattr(self.args, 'random_seed', [])
         if self.random_seed is not None:
             random.seed(self.random_seed)
         else:
             self.random_seed = random.seed()
         
         # Sequence length check
-        self.read_length = getattr(self.args, 'read_length', [])
-        self.read_delta = getattr(self.args, 'read_delta', [])
-        self.mate_length = getattr(self.args, 'mate_length', [])
-        self.mate_delta = getattr(self.args, 'mate_delta', [])
         self.max_read_length = self.read_length + self.read_delta  # approximation
         if self.mate_length:  # Check if mate_length is not zero
             self.min_mate_length = self.mate_length - self.mate_delta
@@ -668,30 +659,20 @@ class Biogrinder:
                                  "length")
         
         # Pre-compile regular expression to check if reads are valid
-        self.exclude_chars = getattr(self.args, 'exclude_chars', [])
         if self.exclude_chars is not None:
             self.exclude_re = re.compile(f"[{self.exclude_chars}]", re.IGNORECASE)  # Match any of the chars
-            setattr(self.args, 'exclude_re', self.exclude_re) 
         
         # Read MIDs
-        self.multiplex_ids = getattr(self.args, 'multiplex_ids', [])
-        self.num_libraries = getattr(self.args, 'num_libraries', [])
         if self.multiplex_ids is not None:
             self.multiplex_ids = self.read_multiplex_id_file(self.multiplex_ids, self.num_libraries)
         
         # Import reference sequences
-        if hasattr(self.args, 'chimera_dist_cdf'):
+        if self.chimera_dist_cdf:
             # Each chimera needs >= 1 bp. Use # sequences required by largest chimera.
             self.min_seq_len = len(self.chimera_dist) + 1
         else:
             self.min_seq_len = 1
 
-        self.reference_file = getattr(self.args, 'reference_file', [])
-        self.unidirectional = getattr(self.args, 'unidirectional', [])
-        self.forward_reverse = getattr(self.args, 'forward_reverse', [])
-        self.abundance_file = getattr(self.args, 'abundance_file', [])
-        self.delete_chars = getattr(self.args, 'delete_chars', [])
-        self.maximum_length = getattr(self.args, 'maximum_length', [])
         self.database = self.database_create(self.reference_file,
                                              self.unidirectional, 
                                              self.forward_reverse,
@@ -708,12 +689,6 @@ class Biogrinder:
                             "proteic reference sequences")
         
         # Genome relative abundance in the different independent libraries to create
-        self.distrib = getattr(self.args, 'distrib', [])
-        self.param = getattr(self.args, 'param', [])
-        self.shared_perc = getattr(self.args, 'shared_perc', [])
-        self.permuted_perc = getattr(self.args, 'permuted_perc', [])
-        self.diversity = getattr(self.args, 'diversity', [])
-        
         self.c_structs = self.community_structures(self.database['ids'],
                                                    self.abundance_file,
                                                    self.distrib,
@@ -725,7 +700,6 @@ class Biogrinder:
                                                    self.forward_reverse)
         
         # Count kmers in the database if we need to form kmer-based chimeras
-        self.chimera_kmer = getattr(self.args, 'chimera_kmer', [])
         if self.chimera_perc and self.chimera_kmer:
             # Get all wanted sequences (not all the sequences in the database)
             ids_dict = {}
@@ -739,17 +713,13 @@ class Biogrinder:
                         ids.append(id)
                         seqs.append(self.database_get_seq(id))                     
             ids_dict.clear()
-
             # Now create a collection of kmers
             self.chimera_kmer_col = KmerCollection(k=self.chimera_kmer,
                                                    seqs=seqs,
                                                    ids=ids).filter_shared(2)
-            
         # Markers to keep track of computation progress
         self.cur_lib = 0
         self.cur_read = 0
-        # Get output directory 
-        self.output_dir  = getattr(self.args, 'output_dir', [])
 
     def initialize_alphabet(self, alphabet):
         """
@@ -832,17 +802,3 @@ class Biogrinder:
             print(f"Warning: {nof_indep} communities were requested but the MID "
                   f"file contained {self.nof_mids} sequences. Ignoring extraneous MIDs.")      
         return self.mids
-    
-    def split_list(self, arg, new_arg, index, def_value, type, options):
-        #args = self.parsed_args
-        self.arg_value = getattr(self.args, arg, [])
-        value = self.arg_value[index] if len(self.arg_value) > index else def_value
-        if type == 'int':
-            if is_int(value):
-                setattr(self.args, new_arg, int(value)) 
-        elif type == 'float':
-            if is_float(value):
-                setattr(self.args, new_arg, int(value)) 
-        elif type == 'str':
-            if is_option(value, options):
-                setattr(self.args, new_arg, value)         
