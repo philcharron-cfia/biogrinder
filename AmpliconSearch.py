@@ -1,5 +1,6 @@
 from Bio import SeqIO
 from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
 from Bio.Data import IUPACData
 from pydna.common_sub_strings import common_sub_strings
 
@@ -52,16 +53,12 @@ class AmpliconSearch:
                 sequences = [prefix + nucleotide for prefix in sequences]
         return sequences
 
-    def match_with_mismatches(self, seq, primer, max_mismatches=1):
-        """Check if the primer matches the sequence with allowed mismatches."""
-        mismatches = sum(1 for a, b in zip(seq, primer) if a != b)
-        return mismatches <= max_mismatches
 
     def find_amplicons(self, sequence, primer_dict):
         """Find amplicons given potentially degenerate primers."""
         primer_items = iter(primer_dict.items())
-        amplicons = {}
-        
+        #sequence = sequence.upper() 
+        amplicons = []
         for primer_name1, primer_seq1 in primer_items:
             primer_name2, primer_seq2 = next(primer_items)
             primer_combo = primer_name1 + "+" + primer_name2
@@ -79,19 +76,28 @@ class AmpliconSearch:
                         for r in match_R_rc:             
                             length = r[1] - f[1]
                             if length > 0:
-                                combo_name = primer_combo+"_"+str(i)
-                                amplicons[combo_name] = sequence_str[f[1]:r[1]+r[2]]
+                                barcode = sequence.id + "_" + primer_combo + "_" + str(i)
+                                amplicon = Seq(sequence_str[f[1]:r[1]+r[2]])
+                                amplicon_r = SeqRecord(amplicon,
+                                                       id = barcode,
+                                                       name = sequence.id)
+                                amplicons.append(amplicon_r)
+                                #amplicons[combo_name] = sequence_str[f[1]:r[1]+r[2]]
                                 i += 1
             i=0            
             for match_F_rc in match_F_rc_array:
                 for f in match_F_rc:
                     for match_R in match_R_array:
                         for r in match_R:
-                            
                             length = f[1] - r[1]
                             if length > 0:
                                 combo_name = primer_combo+"_rev_"+str(i)
-                                amplicons[combo_name] = sequence_str[r[1]:f[1]+f[2]]
+                                #amplicons[combo_name] = sequence_str[r[1]:f[1]+f[2]]
+                                amplicon = Seq(sequence_str[r[1]:f[1]+f[2]])
+                                amplicon_r = SeqRecord(amplicon,
+                                                       id = barcode,
+                                                       name = sequence.id)
+                                amplicons.append(amplicon_r)
                                 i += 1
         return amplicons
 

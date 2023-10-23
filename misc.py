@@ -32,14 +32,6 @@ def normalize(arr, total):
     arr = [x / total for x in arr]
     return arr
 
-def proba_cumul(probas):
-    sum_val = 0
-    cumul_probas = [0]
-    for prob in probas:
-        sum_val += prob
-        cumul_probas.append(sum_val)
-    return cumul_probas
-
 def identify_sequence_type(seq):
     dna_chars = set("ATCGN-")
     rna_chars = set("AUCGN-")

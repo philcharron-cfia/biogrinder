@@ -16,8 +16,8 @@ class Biogrinder:
         # Initialize the Biogrinder object with any necessary parameters
         self.args = args
         self.args = self.argparse()
-        self.initialize()
-        print(self.args)  
+        print(self.args)
+        self.initialize() 
 
     def argparse(self):
         """
@@ -486,7 +486,7 @@ class Biogrinder:
             amplicon_search = 0
 
         # Process database sequences
-        seq_db = {}     # sequence objects (all amplicons)
+        seq_db = []     # sequence objects (all amplicons)
         seq_ids = {}    # reference sequence IDs and IDs of their amplicons
         mol_types = {}  # count of molecule types (dna, rna, protein)
 
@@ -510,7 +510,9 @@ class Biogrinder:
             if amplicon_search:
                 amplicon_result = amplicon_search.find_amplicons(ref_seq, primer_dict)
                 if len(amplicon_result) > 0:
-                    for primer_id, amp_seq in amplicon_result.items():
+                    #print(amplicon_result)
+                    for result in amplicon_result:
+                        amp_seq = result.seq
                         # Remove forbidden chars
                         if delete_chars:
                             clean_seq = amp_seq
@@ -524,13 +526,19 @@ class Biogrinder:
                         # Skip the sequence if it is too long
                         if len(amp_seq) > maximum_length:
                             continue
-                        barcode = ref_seq.id + "_" + primer_id
-                        seq_db[barcode] = amp_seq
+                        #barcode = ref_seq.id + "_" + primer_id
+                        result.seq = amp_seq
+                        seq_db.append(result)
                         if ref_seq.id not in seq_ids:
                             seq_ids[ref_seq.id] = {}
-                        seq_ids[ref_seq.id][barcode] = None
+                        seq_ids[ref_seq.id][result.id] = None
             else:
-                seq_db[ref_seq.name] = str(ref_seq.seq)
+                seq_db.append(ref_seq)
+                if ref_seq.id not in seq_ids:
+                    seq_ids[ref_seq.id] = {}
+                seq_ids[ref_seq.id][ref_seq.id] = None
+                print(seq_ids)
+            
         # Error if no usable sequences in the database
         if len(seq_ids) == 0:
             raise Exception("Error: No genome sequences could be used. If you " 
@@ -558,6 +566,18 @@ class Biogrinder:
         database = {'db': seq_db, 'ids': seq_ids}
         return database
 
+    def database_get_children_seq(self, refseqid):
+        """
+        Retrieve all the sequences object made from a reference sequence based
+        on the ID of the reference sequence.
+        """
+        children = []
+        for child_oid in self.database['ids'][refseqid]:
+            seq_obj = self.database_get_seq(child_oid)
+            if seq_obj:
+                children.append(seq_obj)
+        return children
+
     def database_get_mol_type(self, mol_types):
         """
         Given a count of the different molecule types in the database, determine
@@ -584,12 +604,20 @@ class Biogrinder:
 
         return max_type
     
+    def database_get_parent_id(self, oid):
+        """
+        Based on a sequence object ID, retrieve the ID of the reference 
+        sequence it came from
+        """
+        seq_id = self.database_get_seq(oid) 
+        return seq_id.name
+
     def database_get_seq(self, oid):
         """
         Retrieve a sequence object from the database based on its object ID.
         """
         db = self.database["db"]
-        seq_obj = db.get(oid)
+        seq_obj = next((record for record in db if record.id == oid), None)
         if seq_obj is None:
             print(f"Warning: Could not find sequence with object ID '{oid}' in the database")
         return seq_obj
@@ -636,7 +664,7 @@ class Biogrinder:
             self.chimera_dist = normalize(self.chimera_dist, self.chimera_dist_total)
             # Calculate cdf
             if self.chimera_perc:
-                self.chimera_dist_cdf = proba_cumul(self.chimera_dist)
+                self.chimera_dist_cdf = self.proba_cumul(self.chimera_dist)
 
         # Parameter processing - fastq_output required qual_levels
         if self.fastq_output and (not self.qual_levels or len(self.qual_levels) == 0):
@@ -762,9 +790,127 @@ class Biogrinder:
         
         num_chars = len(self.alphabet_dict)
         # CDF for this alphabet
-        self.alphabet_complete_cdf = proba_cumul([1/num_chars] * num_chars)
-        self.alphabet_truncated_cdf = proba_cumul([1/(num_chars-1)] * (num_chars-1))         
+        self.alphabet_complete_cdf = self.proba_cumul([1/num_chars] * num_chars)
+        self.alphabet_truncated_cdf = self.proba_cumul([1/(num_chars-1)] * (num_chars-1))         
 
+    def lib_coverage(self, c_struct):
+        """
+        Calculate number of sequences needed to reach a given coverage.
+        If the number of sequences is provided, calculate the coverage.
+        """
+        coverage = self.coverage_fold
+        nof_seqs = self.total_reads
+        read_length = self.read_length
+
+        # Calculate library length and size
+        ref_ids = c_struct['ids']
+        diversity = len(ref_ids)
+        lib_length = 0
+
+        for ref_id in ref_ids:
+            seqobj = self.database_get_seq(ref_id)
+            seqlen = len(seqobj) 
+            lib_length += seqlen
+
+        # Calculate number of sequences to generate based on desired coverage.
+        # If both number of reads and coverage fold were given, coverage has
+        # precedence.
+        if coverage:
+            nof_seqs = (coverage * lib_length) / read_length
+            nof_seqs = int(nof_seqs) + (nof_seqs % 1 > 0)  # ceiling
+        coverage = (nof_seqs * read_length) / lib_length
+
+        # Sanity check
+        if nof_seqs < diversity:
+            print("Warning: The number of reads to produce is lower than the "
+                  "required diversity. Increase the coverage or number of reads "
+                  " to achieve this diversity.")
+            self.diversity[self.cur_lib - 1] = nof_seqs
+        return nof_seqs, coverage
+
+    def next_lib(self):
+        self.cur_lib += 1
+        self.cur_read = 0
+        self.cur_total_reads = 0
+        self.cur_coverage_fold = 0
+        self.next_mate = None
+        self.positions = None
+        
+        if 0 <= self.cur_lib - 1 < len(self.c_structs):
+            c_struct = self.c_structs[self.cur_lib - 1]
+            # Create probabilities of picking genomes from community structure
+            self.positions = self.proba_create(c_struct, self.length_bias, self.copy_bias)
+
+            # Calculate needed number of sequences based on desired coverage
+            self.cur_total_reads, self.cur_coverage_fold = self.lib_coverage(c_struct)
+            
+            # If chimeras are needed, update the kmer collection with sequence abundance
+            kmer_col = self.chimera_kmer_col
+            #print(weights)
+            if kmer_col:
+                weights = {}
+                for i in range(len(c_struct['ids'])):
+                    id = c_struct['ids'][i]
+                    weight = c_struct['abs'][i]
+                    weights[id] = weight
+                kmer_col.weights = weights
+                kmers, freqs = kmer_col.counts(None, 1, 1)
+                self.chimera_kmer_arr = kmers
+                self.chimera_kmer_cdf = self.proba_cumul(freqs)
+        else:
+            c_struct = None
+        return c_struct            
+
+    def proba_bias_dependency(self, c_struct, size_dep, copy_bias):
+        '''
+        Affect probability of picking a species by considering genome length
+        or gene copy number bias
+        '''
+        # Calculate probability
+        probas = []
+        totproba = 0
+        diversity = len(c_struct['ids'])
+        for i in range(diversity):
+            proba = c_struct['abs'][i]
+
+            if self.forward_reverse:
+                # Gene copy number bias
+                if copy_bias:
+                    refseq_id = self.database_get_parent_id(c_struct['ids'][i])
+                    nof_amplicons = len(self.database_get_children_seq(refseq_id))
+                    proba *= nof_amplicons
+            else:
+                # Genome length bias
+                if size_dep:
+                    id = c_struct['ids'][i]
+                    seq = self.database_get_seq(id)
+                    _len = len(seq)  # Assuming the seq is a string in Python
+                    proba *= _len
+                    
+
+            probas.append(proba)
+            totproba += proba
+
+        # Normalize if necessary
+        if totproba != 1:
+            probas = normalize(probas, totproba)
+        return probas
+
+    def proba_create(self, c_struct, size_dep, copy_bias):
+        # Calculate size-dependent, copy number-dependent probabilities
+        probas = self.proba_bias_dependency(c_struct, size_dep, copy_bias)
+        # Generate proba starting position
+        positions = self.proba_cumul(probas)
+        return positions
+    
+    def proba_cumul(self, probas):
+        sum_val = 0
+        cumul_probas = [0]
+        for prob in probas:
+            sum_val += prob
+            cumul_probas.append(sum_val)
+        return cumul_probas
+    
     def process_profile_file(self, args):
         """
         Find profile file in arguments and read the profiles. The profile file

@@ -24,8 +24,14 @@ def biogrinder(*args):
             raise OSError("Error: Could not create output folder "
                           f"{factory.output_dir}\n{e}")
         
-    print(factory.read_model)
+    # Generate sequences
+    while True:
+        c_struct = factory.next_lib()
+        if not c_struct:
+            break
+        ##### YOU ARE HERE MATCHING LINE 1068 #####
         
+               
 
 def main():
     biogrinder(*sys.argv[1:])

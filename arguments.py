@@ -40,6 +40,7 @@ def create_parser():
     basic_params.add_argument(
         '-cf', '--coverage_fold', 
         type=check_float_positive, 
+        default=100,
         help=textwrap.dedent('''\
             Desired fold coverage of the input reference sequences (the output
             FASTA length divided by the input FASTA length). Do not specify

@@ -1,6 +1,6 @@
 from Bio import SeqIO
 from Bio.Seq import Seq
-from Bio.SeqFeature import SeqFeature
+from Bio.SeqRecord import SeqRecord
 from misc import *
 
 class KmerCollection:
@@ -72,7 +72,7 @@ class KmerCollection:
     @property
     def weights(self):
         """
-        Get or set the weight of each sequence. Each sequence is given a
+        Get or set countsthe weight of each sequence. Each sequence is given a
         weight of 1 by default.
 
         Returns:
@@ -228,7 +228,7 @@ class KmerCollection:
             self._collection_by_seq = col_by_seq
         return self
     
-    def counts(self, id=None, start=None, freq=0):
+    def counts(self, id=None, start=1, freq=0):
         """
         Calculate the total count of each kmer. Counts are affected by the
         weights given to the sequences.
@@ -353,8 +353,8 @@ class KmerCollection:
         k = self._k
         if isinstance(seq, Seq):
             seq_str = str(seq)
-        elif isinstance(seq, SeqFeature):
-            seq_str = str(seq.extract(seq).seq)
+        elif isinstance(seq, SeqRecord):
+            seq_str = str(seq.seq)
         else:
             seq_str = seq
         
@@ -381,6 +381,7 @@ class KmerCollection:
 
         for source, positions in sources.items():
             for position in positions:
+
                 if position >= start:
                     weight = self._weights.get(source, 1) if self._weights else 1
                     count += weight
