@@ -1,12 +1,14 @@
 import arguments
 from AmpliconSearch import AmpliconSearch
 from KmerCollection import KmerCollection
+from SimulatedRead import *
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
-from Bio.SeqFeature import SeqFeature
+from Bio.SeqFeature import SeqFeature, FeatureLocation, CompoundLocation
 from Bio.Seq import Seq
 from misc import *
 import math
+import numpy as np
 import random
 import re
 import sys
@@ -16,7 +18,7 @@ class Biogrinder:
         # Initialize the Biogrinder object with any necessary parameters
         self.args = args
         self.args = self.argparse()
-        print(self.args)
+        #print(self.args)
         self.initialize() 
 
     def argparse(self):
@@ -33,6 +35,49 @@ class Biogrinder:
                 setattr(self, arg, value)
         return args 
     
+    def assemble_chimera(self, *pos):
+        """
+        Create a chimera sequence object based on positional information:
+        seq1, start1, end1, seq2, start2, end2, ...
+        """
+
+        # Create the ID, sequence and locations list
+        chimera_id = ''
+        chimera_seq = ''
+        locations = []
+        pos = pos[:6]
+        
+        while pos:
+            seq, start, end = pos[0], pos[1], pos[2]
+            pos = pos[3:]
+            # Add amplicon position to the locations list
+            locations.append(FeatureLocation(start, end))
+
+            # Add amplicon ID
+            chimera_id = chimera_id + ',' if chimera_id else ''
+
+            # Add subsequence
+            chimera = seq
+            chimera_id += chimera.id
+            chimera_seq += chimera.seq[start:end]
+        
+        # Create the CompoundLocation
+        chimera_loc = CompoundLocation(locations)
+
+        # Create a sequence object
+        chimera_obj = SeqRecord(
+            Seq(chimera_seq),
+            id=chimera_id
+        )
+        individual_locations = list(chimera_loc.parts)
+        simple_locations = [(int(loc.start), int(loc.end)) for loc in individual_locations]
+
+
+        # Save split location object (a bit hackish)
+        chimera_obj._chimera = simple_locations
+
+        return chimera_obj
+
     def community_calculate_amplicon_abundance(self, r_spp_abs, r_spp_ids, seq_ids):
         '''
         Convert abundance of species into abundance of their amplicons because
@@ -618,8 +663,8 @@ class Biogrinder:
         """
         db = self.database["db"]
         seq_obj = next((record for record in db if record.id == oid), None)
-        if seq_obj is None:
-            print(f"Warning: Could not find sequence with object ID '{oid}' in the database")
+        #if seq_obj is None:
+        #    print(f"Warning: Could not find sequence with object ID '{oid}' in the database")
         return seq_obj
     
     def initialize(self):
@@ -633,7 +678,7 @@ class Biogrinder:
         self.mate_length = is_int(self.insert_dist[0] if len(self.insert_dist) > 0 else 0)
         self.mate_model = is_option(self.insert_dist[1] if len(self.insert_dist) > 1 else 'uniform',
                                     ['uniform', 'normal'])
-        self.mate_length = is_int(self.insert_dist[2] if len(self.insert_dist) > 2 else 0)
+        self.mate_delta = is_int(self.insert_dist[2] if len(self.insert_dist) > 2 else 0)
 
         # Parameter processing - abundance_model
         self.distrib = is_option(self.abundance_model[0] if len(self.abundance_model) > 0 else 'uniform',
@@ -643,9 +688,8 @@ class Biogrinder:
         # Parameter processing - mutation_dist
         self.mutation_model = is_option(self.mutation_dist[0] if len(self.mutation_dist) > 0 else 'uniform',
                                         ['uniform','linear','poly4'])
-        self.mutation_para1 = is_int(self.mutation_dist[1] if len(self.mutation_dist) > 1 else 0)
-        self.mutation_para2 = is_int(self.mutation_dist[2] if len(self.mutation_dist) > 2 else 0)
-        
+        self.mutation_para1 = is_float(self.mutation_dist[1] if len(self.mutation_dist) > 1 else 0)
+        self.mutation_para2 = is_float(self.mutation_dist[2] if len(self.mutation_dist) > 2 else 0)
 
         # Parameter processing - mutation_ratio
         self.mutation_ratio.append(0) if len(self.mutation_ratio) == 1 else self.mutation_ratio[1]
@@ -665,6 +709,9 @@ class Biogrinder:
             # Calculate cdf
             if self.chimera_perc:
                 self.chimera_dist_cdf = self.proba_cumul(self.chimera_dist)
+            else:
+                self.chimera_dist_cdf = None
+
 
         # Parameter processing - fastq_output required qual_levels
         if self.fastq_output and (not self.qual_levels or len(self.qual_levels) == 0):
@@ -689,6 +736,8 @@ class Biogrinder:
         # Pre-compile regular expression to check if reads are valid
         if self.exclude_chars is not None:
             self.exclude_re = re.compile(f"[{self.exclude_chars}]", re.IGNORECASE)  # Match any of the chars
+        else:
+            self.exclude_re = None
         
         # Read MIDs
         if self.multiplex_ids is not None:
@@ -745,6 +794,8 @@ class Biogrinder:
             self.chimera_kmer_col = KmerCollection(k=self.chimera_kmer,
                                                    seqs=seqs,
                                                    ids=ids).filter_shared(2)
+        else:
+            self.chimera_kmer_col = None
         # Markers to keep track of computation progress
         self.cur_lib = 0
         self.cur_read = 0
@@ -754,10 +805,10 @@ class Biogrinder:
         Store the characters of the alphabet to use and calculate their cdf so that
         we can easily pick them at random later.
         """
-        self.alphabet_dict = {}
-        
+        self.alphabet_dict_in = {}
+        self.alphabet_dict_out = {}
         if alphabet == 'dna':
-            self.alphabet_dict = {
+            self.alphabet_dict_in = {
                 'A': None,
                 'C': None,
                 'G': None,
@@ -765,8 +816,14 @@ class Biogrinder:
                 'N': None,
                 "-": None
             }
+            self.alphabet_dict_out = {
+                'A': None,
+                'C': None,
+                'G': None,
+                'T': None
+            }
         elif alphabet == 'rna':
-            self.alphabet_dict = {
+            self.alphabet_dict_in = {
                 'A': None,
                 'C': None,
                 'G': None,
@@ -774,8 +831,14 @@ class Biogrinder:
                 'N': None,
                 "-": None
             }
+            self.alphabet_dict_out = {
+                'A': None,
+                'C': None,
+                'G': None,
+                'U': None
+            }
         elif alphabet == 'protein':
-            self.alphabet_dict = {
+            self.alphabet_dict_in = {
                 'A': None, 'R': None, 'N': None, 'D': None, 'C': None,
                 'Q': None, 'E': None, 'G': None, 'H': None, 'I': None,
                 'L': None, 'K': None, 'M': None, 'F': None, 'P': None,
@@ -785,13 +848,107 @@ class Biogrinder:
                 # 'X': None  # any amino-acid
                 # J, O and U are the only unused letters
             }
+            self.alphabet_dict_out = self.alphabet_dict_in
         else:
             raise Exception(f"Error: unknown alphabet '{alphabet}'")
         
-        num_chars = len(self.alphabet_dict)
+        num_chars_in = len(self.alphabet_dict_in)
+        num_chars_out = len(self.alphabet_dict_out)
         # CDF for this alphabet
-        self.alphabet_complete_cdf = self.proba_cumul([1/num_chars] * num_chars)
-        self.alphabet_truncated_cdf = self.proba_cumul([1/(num_chars-1)] * (num_chars-1))         
+        self.alphabet_complete_in_cdf = self.proba_cumul([1/num_chars_in] * num_chars_in)
+        self.alphabet_truncated_in_cdf = self.proba_cumul([1/(num_chars_in-1)] * (num_chars_in-1))         
+        self.alphabet_complete_out_cdf = self.proba_cumul([1/num_chars_out] * num_chars_out)
+        self.alphabet_truncated_out_cdf = self.proba_cumul([1/(num_chars_out-1)] * (num_chars_out-1))         
+
+    def is_valid(self, seq_obj):
+        """
+        Return True if the sequence object is valid (is not empty and does not 
+        have any of the specified forbidden characters), False otherwise. 
+        """
+        if self.exclude_re.search(str(seq_obj.seq)):
+            return False
+        return True
+
+
+    def kmer_chimera_fragments(self, m):
+        """
+        Return a kmer-based chimera of the required size. It is impossible to
+        randomly make one that will meet the required size. So, make multiple
+        attempts and save failed attempts in a pool for later reuse.
+        """
+        frags = []
+        if hasattr(self, 'chimera_kmer_pool'):
+            pool = self.chimera_kmer_pool.get(m, [])
+        else:
+            pool = None
+        
+        if pool:
+            # Pick a chimera from the pool if possible
+            frags = pool.pop(0)
+        else:
+            # Attempt multiple times to generate a suitable chimera
+            actual_m = 0
+            nof_tries = 0
+            max_nof_tries = 100
+
+            while actual_m < m and nof_tries <= max_nof_tries:
+                nof_tries += 1
+                frags = self.kmer_chimera_fragments_backend(m)
+                actual_m = len(frags) // 3
+
+                if nof_tries >= max_nof_tries:
+                    # Could not make a suitable chimera, accept the current chimera
+                    print(f"Warning: Could not make a chimera of {m} sequences after "
+                        f"{max_nof_tries} attempts. Accepting a chimera of {actual_m} sequences"
+                        " instead...")
+                    actual_m = m
+
+                if actual_m < m:
+                    # Add unsuitable chimera to the pool
+                    if actual_m not in self.chimera_kmer_pool:
+                        self.chimera_kmer_pool[actual_m] = []
+                    pool = self.chimera_kmer_pool[actual_m]
+                    pool.append(frags)
+                    # Prevent the pool from growing too big
+                    max_pool_size = 100
+                    if len(pool) > max_pool_size:
+                        pool.pop(0)
+                else:
+                    # We got a suitable chimera... done
+                    break
+
+        return frags
+
+    def kmer_chimera_fragments_backend(self, m):
+        """
+        Pick sequence fragments for multimeras where breakpoints are located on
+        shared kmers. A smaller chimera than requested may be returned.
+        """
+
+        # Initial pair of fragments
+        pos = self.rand_kmer_chimera_initial()       
+
+        # Append sequence to chimera
+        for i in range(3, m + 1):
+
+            seqid1, start1, end1, seqid2, start2, end2 = self.rand_kmer_chimera_extend(pos[-3], pos[-2], pos[-1])
+
+            if seqid2 is None:
+                # Could not find a sequence that shared a suitable kmer
+                break
+
+            pos[-3:-1] = [seqid1, start1, end1]
+            pos.extend([seqid2, start2, end2])
+
+        # Put sequence objects instead of sequence IDs
+        i = 0
+        while i < len(pos):
+            seqid = pos[i]
+            seq = self.database_get_seq(seqid)
+            pos[i] = seq
+            i += 3
+
+        return pos
 
     def lib_coverage(self, c_struct):
         """
@@ -828,6 +985,8 @@ class Biogrinder:
             self.diversity[self.cur_lib - 1] = nof_seqs
         return nof_seqs, coverage
 
+
+
     def next_lib(self):
         self.cur_lib += 1
         self.cur_read = 0
@@ -860,6 +1019,148 @@ class Biogrinder:
         else:
             c_struct = None
         return c_struct            
+
+    def next_mate_pair(self):
+        oids = self.c_structs[self.cur_lib - 1]['ids']
+        mid = self.multiplex_ids[self.cur_lib - 1] if self.multiplex_ids and self.cur_lib - 1 in self.multiplex_ids else ''
+        lib_num = self.cur_lib if self.num_libraries > 1 else None
+        pair_num = int(self.cur_read / 2 + 0.5)
+        max_nof_tries = 1 if self.forward_reverse else 10
+
+        # Deal with mate orientation
+        mate_orientations = list(self.mate_orientation)
+        mate_1_orientation = 1 if mate_orientations[0] == 'F' else -1
+        mate_2_orientation = 1 if mate_orientations[1] == 'F' else -1
+
+        # Choose a random genome
+        genome = self.rand_seq(self.positions, oids)
+
+        nof_tries = 0
+        while True:
+            nof_tries += 1
+            if nof_tries > max_nof_tries:
+                message = f"Error: Could not take a pair of random shotgun read without forbidden characters from reference sequence {genome.seq.id}"
+                if max_nof_tries > 1:
+                    message += f" ({max_nof_tries} attempts made)"
+                message += "."
+                raise Exception(message)
+
+            if self.chimera_perc:
+                genome = self.rand_seq_chimera(genome, self.chimera_perc, self.positions, oids)
+            
+            orientation = 1 if self.unidirectional != 0 else self.rand_seq_orientation()
+            mate_length = self.rand_seq_length(self.mate_length, self.mate_model, self.mate_delta)
+            
+            max_length = len(genome) + len(mid)
+            if mate_length > max_length:
+                mate_length = max_length
+            
+            mate_start, mate_end = self.rand_seq_pos(genome, mate_length, self.forward_reverse, mid)
+            
+            read_length = self.rand_seq_length(self.read_length, self.read_model, self.read_delta)
+            seq_1_start, seq_1_end = mate_start, mate_start + read_length - 1
+            read_length = self.rand_seq_length(self.read_length, self.read_model, self.read_delta)
+            seq_2_start, seq_2_end = mate_end - read_length + 1, mate_end
+            
+            if orientation == -1:
+                mate_1_orientation *= orientation
+                mate_2_orientation *= orientation
+                seq_1_start, seq_2_start = seq_2_start, seq_1_start
+                seq_1_end, seq_2_end = seq_2_end, seq_1_end
+            
+            # Generate first mate read
+            shotgun_seq_1 = new_subseq(pair_num, genome, self.unidirectional,
+                                            mate_1_orientation, seq_1_start, seq_1_end, mid, '1', lib_num,
+                                            self.desc_track, self.qual_levels)
+            if self.homopolymer_dist or self.mutation_para1:
+                shotgun_seq_1 = self.rand_seq_errors(shotgun_seq_1)
+            if self.exclude_re and not self.is_valid(shotgun_seq_1):
+                continue
+            
+            # Generate second mate read
+            shotgun_seq_2 = new_subseq(pair_num, genome, self.unidirectional,
+                                            mate_2_orientation, seq_2_start, seq_2_end, mid, '2', lib_num,
+                                            self.desc_track, self.qual_levels)
+            if self.homopolymer_dist or self.mutation_para1:
+                shotgun_seq_2 = self.rand_seq_errors(shotgun_seq_2)
+            if self.exclude_re and not self.is_valid(shotgun_seq_2):
+                continue
+
+            # Both shotgun reads were valid
+            break
+        return shotgun_seq_1, shotgun_seq_2
+
+
+    def next_read(self):
+        if self.cur_lib is None:
+            self.next_lib()
+        
+        self.cur_read += 1
+        
+        if self.cur_read <= self.cur_total_reads:
+            # Generate the next read
+            if hasattr(self, 'mate_length') and self.mate_length:
+                # Generate a mate pair read
+                if not hasattr(self, 'next_mate') or self.next_mate is None:
+                    # Generate a new pair of reads
+                    read, read2 = self.next_mate_pair()
+                    # Save second read of the pair for later
+                    self.next_mate = read2
+                else:
+                    # Use saved read
+                    read = self.next_mate
+                    self.next_mate = None
+            else:
+                # Generate a single shotgun or amplicon read
+                read = self.next_single_read()
+        else:
+            read = None
+        return read
+    
+    def next_single_read(self):
+        """
+        Generate a single shotgun or amplicon read.
+        """
+        oids = self.c_structs[self.cur_lib - 1]['ids']
+        mid = self.multiplex_ids[self.cur_lib - 1] if self.cur_lib - 1 in self.multiplex_ids else ''
+        lib_num = self.cur_lib if self.num_libraries > 1 else None
+        max_nof_tries = 1 if self.forward_reverse else 10
+
+        # Choose a random genome or amplicon
+        genome = self.rand_seq(self.positions, oids)
+        nof_tries = 0
+        while True:
+            nof_tries += 1
+            if nof_tries > max_nof_tries:
+                message = ("Error: Could not take a random shotgun read without "
+                           "forbidden characters from reference sequence " + genome.seq.id)
+                if max_nof_tries > 1:
+                    message += f" ({max_nof_tries} attempts made)"
+                message += "."
+                raise Exception(message)
+
+            if self.chimera_perc:
+                genome = self.rand_seq_chimera(genome, self.chimera_perc, self.positions, oids)
+
+            orientation = 1 if self.unidirectional != 0 else self.rand_seq_orientation()
+
+            length = self.rand_seq_length(self.read_length, self.read_model, self.read_delta)
+
+            max_length = len(genome) + len(mid)
+            if length > max_length:
+                length = max_length
+
+            start, end = self.rand_seq_pos(genome, length, self.forward_reverse, mid)
+
+            shotgun_seq = new_subseq(self.cur_read, genome, self.unidirectional, orientation, start, end, mid, None, lib_num, self.desc_track, self.qual_levels)
+
+            if self.homopolymer_dist or self.mutation_para1:
+                shotgun_seq = self.rand_seq_errors(shotgun_seq)
+
+            if not self.exclude_re or self.is_valid(shotgun_seq):
+                break
+
+        return shotgun_seq    
 
     def proba_bias_dependency(self, c_struct, size_dep, copy_bias):
         '''
@@ -933,6 +1234,420 @@ class Biogrinder:
         except FileNotFoundError:
             print(f"Error: Could not read file '{args.profile_file}'") 
 
+    def rand_chimera_fragments(self, m, sequence, positions, oids):
+        """
+        Pick which sequences and breakpoints to use to form a chimera.
+        """
+        
+        # Pick random sequences
+        seqs = [sequence]
+        min_len = sequence.length
+
+        for i in range(2, m + 1):
+            prev_seq = seqs[-1]
+            seq = None
+            while True:
+                seq = self.rand_seq(positions, oids)
+                if seq.seq.id != prev_seq.seq.id:
+                    break
+            seqs.append(seq)
+            seq_len = seq.length
+            if min_len is None or seq_len < min_len:
+                min_len = seq_len
+
+        # Pick random breakpoints
+        nof_breaks = m - 1
+        breaks = {}
+        while len(breaks) < nof_breaks:
+            rand_pos = 1 + int(random.uniform(0, min_len - 1))
+            breaks[rand_pos] = None
+        breaks = [1] + sorted(breaks.keys())
+        
+        # Assemble the positional array
+        pos = []
+        for i in range(1, m + 1):
+            seq = seqs[i - 1]
+            start = breaks.pop(0)
+            end = breaks[0] if breaks else seq.length
+            if breaks:
+                breaks[0] += 1
+            pos.extend([seq, start, end])
+
+        return pos
+
+    def rand_chimera_size(self):
+        """
+        Decide the number of sequences that the chimera will have, 
+        based on the user-defined chimera distribution.
+        """
+        return self.rand_weighted(self.chimera_dist_cdf) + 2
+
+    def rand_homopolymer_errors(self, seq_str, error_specs):
+        pattern = r"(.)\1+"
+        for match in re.finditer(pattern, seq_str):
+            res = match.group(1)                  # residue in homopolymer
+            len_homopolymer = len(match.group())  # length of the homopolymer
+            pos = match.start()                   # start of the homopolymer
+
+            stddev, new_len, diff = 0, 0, 0
+            if self.homopolymer_dist == 'balzer':
+                stddev = 0.03494 + len_homopolymer * 0.06856
+            elif self.homopolymer_dist == 'richter':
+                stddev = 0.15 * np.sqrt(len_homopolymer)
+            elif self.homopolymer_dist == 'margulies':
+                stddev = 0.15 * len_homopolymer
+            else:
+                raise ValueError(f"Unknown homopolymer distribution '{self.homopolymer_dist}'")
+
+            new_len = int(len_homopolymer + stddev * np.random.randn() + 0.5)
+            new_len = max(0, new_len)  # make sure new_len isn't negative
+            diff = new_len - len_homopolymer
+
+            if diff == 0:
+                continue
+            if diff > 0:
+                if pos not in error_specs:
+                    error_specs[pos] = {}
+                error_specs[pos]['+'] = [res] * diff
+            elif diff < 0:
+                for offset in range(abs(diff)):
+                    if pos + offset not in error_specs:
+                        error_specs[pos + offset] = {}
+                    error_specs[pos + offset]['-'] = [None]
+
+        return error_specs
+
+    def rand_kmer_chimera_extend(self, seqid1, start1, end1):
+        """
+        Pick another fragment to add to a kmer-based chimera.
+        Return None if none can be found.
+        """
+        
+        seqid2 = start2 = end2 = None
+
+        # Get kmer frequencies in the end part of sequence 1
+        kmer_arr, freqs = self.chimera_kmer_col.counts(seqid1, start1, 1)
+
+        if kmer_arr is not None:
+
+            # Pick a random kmer
+            kmer_cdf = self.proba_cumul(freqs)
+            kmer = self.rand_kmer_from_collection(kmer_arr, kmer_cdf)
+
+            # Get a sequence that has the same kmer as the first but is not the first
+            seqid2 = self.rand_seq_with_kmer(kmer, seqid1)
+
+            # Pick a suitable kmer start on that sequence
+            if seqid2 is not None:
+
+                # Pick a random breakpoint
+                # TODO: can we prefer a position not too crazy?
+                pos1 = self.rand_kmer_start(kmer, seqid1, start1)
+                pos2 = self.rand_kmer_start(kmer, seqid2)
+
+                # Place breakpoint about the middle of the kmer (kmers are at least 2 bp long) 
+                middle = int(self.chimera_kmer / 2)
+                end1 = pos1 + middle - 1
+                start2 = pos2 + middle
+                end2 = len(self.database_get_seq(seqid2).seq)
+
+        return seqid1, start1, end1, seqid2, start2, end2
+
+    def rand_kmer_chimera_initial(self, seqid1=None):
+        """
+        Pick two sequences and start points to assemble a kmer-based bimera.
+        An optional starting sequence can be provided.
+        """
+
+        if seqid1:
+            # Try to pick a kmer from the requested sequence
+            kmer = self.rand_kmer_of_seq(seqid1)
+            if not kmer:
+                raise ValueError(f"Error: Sequence {seqid1} did not contain a suitable kmer")
+        else:
+            # Pick a random kmer and sequence containing that kmer
+            kmer = self.rand_kmer_from_collection()
+            seqid1 = self.rand_seq_with_kmer(kmer)
+
+        # Get a sequence that has the same kmer as the first but is not the first
+        seqid2 = self.rand_seq_with_kmer(kmer, seqid1)
+        if not seqid2:
+            raise ValueError(f"Error: Could not find another sequence that contains kmer {kmer}")
+
+        # Pick random breakpoint positions
+        pos1 = self.rand_kmer_start(kmer, seqid1)
+        pos2 = self.rand_kmer_start(kmer, seqid2)
+
+        # Swap sequences so that pos1 < pos2
+        if pos1 > pos2:
+            seqid1, seqid2 = seqid2, seqid1
+            pos1, pos2 = pos2, pos1
+
+        # Place breakpoint about the middle of the kmer (kmers are at least 2 bp long) 
+        middle = int(self.chimera_kmer / 2)
+        start1 = 1
+        end1 = pos1 + middle - 1
+        start2 = pos2 + middle
+        end2 = len(self.database_get_seq(seqid2).seq)
+
+        return [seqid1, start1, end1, seqid2, start2, end2]
+
+    def rand_kmer_from_collection(self, kmer_arr=None, kmer_cdf=None):
+        """
+        Pick a kmer at random amongst all possible kmers in the collection.
+        """
+        
+        kmers = kmer_arr if kmer_arr is not None else self.chimera_kmer_arr
+        cdf = kmer_cdf if kmer_cdf is not None else self.chimera_kmer_cdf
+
+        kmer = kmers[self.rand_weighted(cdf)]
+        
+        return kmer
+
+
+    def rand_kmer_of_seq(self, seqid):
+        """
+        Pick a kmer amongst the possible kmers of the given sequence.
+        """
+
+        kmer = None
+        kmers, freqs = self.chimera_kmer_col.kmers(seqid, 1)
+        
+        if len(kmers) > 0:
+            cdf = self.proba_cumul(freqs)
+            kmer = kmers[self.rand_weighted(cdf)]
+        return kmer
+
+    def rand_kmer_start(self, kmer, source, min_start=1):
+        """
+        Pick a kmer starting position at random for the given kmer and sequence ID.
+        An optional minimum start position can be given.
+        """
+        
+        kmer_starts = self.chimera_kmer_col.positions(kmer, source)
+
+        # Find index of first index min_idx where position respects min_start
+        min_idx = None
+        for i, start in enumerate(kmer_starts):
+            if start >= min_start:
+                min_idx = i
+                break
+
+        if min_idx is not None:
+            # Get a random index between min_idx and the end of the list
+            rand_idx = min_idx + random.randint(0, len(kmer_starts) - min_idx - 1)
+            # Get the value for this random index
+            start = kmer_starts[rand_idx]
+            return start
+        return None
+
+    def rand_point_errors(self, seq_str, error_specs):
+        seq_len = len(seq_str)
+        
+        if not hasattr(self, 'mutation_cdf'):
+            self.mutation_cdf = {}
+            self.mutation_avg = {}
+        if seq_len not in self.mutation_cdf:
+            mut_pdf = []
+            mut_sum = 0
+
+            if self.mutation_model == 'uniform':
+                proba = 1 / seq_len
+                mut_pdf = [proba for _ in range(seq_len)]
+                mut_freq = self.mutation_para1
+                mut_sum = 1
+
+            elif self.mutation_model == 'linear':
+                mut_freq = abs(self.mutation_para2 + self.mutation_para1) / 2
+                if seq_len == 1:
+                    mut_pdf.append(mut_freq)
+                    mut_sum = mut_freq
+                else:
+                    slope = (self.mutation_para2 - self.mutation_para1) / (seq_len - 1)
+                    for i in range(seq_len):
+                        val = self.mutation_para1 + i * slope
+                        mut_pdf.append(val)
+                        mut_sum += val
+
+            elif self.mutation_model == 'poly4':
+                for i in range(seq_len):
+                    val = self.mutation_para1 + self.mutation_para2 * (i+1)**4
+                    mut_pdf.append(val)
+                    mut_sum += val
+                mut_freq = mut_sum / seq_len
+
+            else:
+                raise ValueError(f"Unsupported error distribution: {self.mutation_model}")
+
+            if mut_sum != 1:
+                mut_pdf = [x/mut_sum for x in mut_pdf]
+
+            self.mutation_cdf[seq_len] = np.cumsum(mut_pdf)
+            self.mutation_avg[seq_len] = mut_freq
+
+        mut_cdf = self.mutation_cdf[seq_len]
+        mut_avg = self.mutation_avg[seq_len]
+        read_mutation_freq = mut_avg + 0.3 * mut_avg * np.random.randn()
+        nof_mutations = int(seq_len * read_mutation_freq / 100 + np.random.rand())
+
+        if nof_mutations == 0:
+            return error_specs
+
+        subst_frac = self.mutation_ratio[0] / 100
+        for _ in range(nof_mutations):
+            idx = np.searchsorted(mut_cdf, np.random.rand())
+            if idx not in error_specs:
+                error_specs[idx] = {}
+
+            if np.random.rand() <= subst_frac:
+                error_specs[idx]['%'] = self.rand_res(seq_str[idx])
+            else:
+                if np.random.rand() < 0.5:
+                    error_specs[idx]['+'] = self.rand_res()
+                else:
+                    if len(seq_str) > 1:
+                        error_specs[idx]['-'] = None
+
+        return error_specs
+
+    def rand_res(self, not_nuc=None):
+            if not_nuc is None:
+                # Use complete alphabet
+                res = list(self.alphabet_dict_out.keys())
+                cdf = self.alphabet_complete_out_cdf
+            else:
+                # Remove non-desired residue from alphabet
+                res_dict = self.alphabet_dict_out.copy()
+                del res_dict[not_nuc.upper()]
+                res = list(res_dict.keys())
+                cdf = self.alphabet_truncated_out_cdf
+
+            chosen_res = res[self.rand_weighted(cdf)]
+            return chosen_res
+
+    def rand_seq(self, positions, oids):
+        """
+        Choose a sequence object randomly using a probability distribution.
+        """
+        return self.database_get_seq(oids[self.rand_weighted(positions)])
+    
+    def rand_seq_chimera(self, sequence, chimera_perc, positions, oids):
+        """
+        Produce an amplicon that is a chimera of multiple sequences.
+        """
+
+        # Sanity check
+        if len(oids) < 2 and chimera_perc > 0:
+            raise ValueError("Error: Not enough sequences to produce chimeras")
+
+        # Fate now decides to produce a chimera or not
+        if random.uniform(0, 100) <= chimera_perc:
+
+            # Pick multimera size
+            m = self.rand_chimera_size()
+
+            # Pick chimera fragments
+            if self.chimera_kmer:
+                pos = self.kmer_chimera_fragments(m)
+            else:
+                pos = self.rand_chimera_fragments(m, sequence, positions, oids)
+
+            # Join chimera fragments
+            chimera = self.assemble_chimera(*pos)
+
+        else:
+            # No chimera needed
+            chimera = sequence
+
+        return chimera
+
+    def rand_seq_errors(self, seq):
+        seq_str = str(seq.seq)
+        error_specs = {}  # Error specifications
+
+        # First, specify errors in homopolymeric stretches
+        if self.homopolymer_dist:
+            error_specs = self.rand_homopolymer_errors(seq_str, error_specs)
+
+        # Then, specify point sequencing errors: substitutions, insertions, deletions
+        if self.mutation_para1:
+            error_specs = self.rand_point_errors(seq_str, error_specs)
+
+        # Finally, actually implement the errors as per the specifications
+        if error_specs:
+            seq.errors(error_specs)
+        return seq
+
+    def rand_seq_length(self, avg, model=None, stddev=None):
+        """Choose the sequence length following a given probability distribution."""
+        if not model:
+            # No specified distribution: all the sequences have the length of the average
+            return avg
+        else:
+            if model == 'uniform':
+                # Uniform distribution: integers uniformly distributed in [min, max]
+                min_val, max_val = avg - stddev, avg + stddev
+                return min_val + int(random.uniform(0, 1) * (max_val - min_val + 1))
+            elif model == 'normal':
+                # Gaussian distribution: decimal number normally distribution in N(avg,stddev)
+                length = avg + stddev * np.random.randn()
+                return max(1, int(length + 0.5))
+            else:
+                raise ValueError(f"Error: '{model}' is not a supported read or insert length distribution")
+
+    def rand_seq_orientation(self):
+        """Return a random read orientation: 1 for uncomplemented, or -1 for complemented."""
+        return 1 if random.random() < 0.5 else -1
+
+    def rand_seq_pos(self, seq_obj, read_length, amplicon=None, mid=''):
+        """
+        Pick the coordinates (start and end) of an amplicon or random shotgun read.
+        Coordinate system: the first base is 1 and the number is inclusive, i.e. 1-2
+        are the first two bases of the sequence.
+        """
+        # Read length includes the MID
+        length = read_length - len(mid)
+        
+        # Pick starting position
+        if amplicon:
+            # Amplicon always starts at the first position of the amplicon
+            start = 1
+        else:
+            # Shotgun reads start at a random position in the genome
+            start = random.randint(1, seq_obj.length - length + 1)
+        
+        # End position
+        end = start + length - 1
+        return start, end
+
+    def rand_seq_with_kmer(self, kmer, excl=None):
+        """
+        Pick a random sequence ID that contains the given kmer. An optional sequence
+        ID to exclude can be provided.
+        """
+        
+        sources, freqs = self.chimera_kmer_col.sources(kmer, excl, 1)
+        num_sources = len(sources)
+        if num_sources > 0:
+            cdf = self.proba_cumul(freqs)
+            source = sources[self.rand_weighted(cdf)]
+            return source
+        return None
+
+    def rand_weighted(self, cum_probas):
+        """
+        Pick a random number based on the given cumulative probabilities.
+        Cumulative weights can be obtained from the proba_cumul() function.
+        """
+        pick = random.random()
+        index = -1
+        for proba in cum_probas:
+            if pick >= proba:
+                index += 1
+            else:
+                return index
+        return index 
+
     def read_multiplex_id_file(self, file, nof_indep):
         self.mids = []
         # Read FASTA file containing the MIDs
@@ -948,3 +1663,24 @@ class Biogrinder:
             print(f"Warning: {nof_indep} communities were requested but the MID "
                   f"file contained {self.nof_mids} sequences. Ignoring extraneous MIDs.")      
         return self.mids
+    
+    def write_community_structure(self, c_struct, filename):
+        with open(filename, 'w') as out_file:
+            out_file.write("# rank\tseq_id\trel_abund_perc\n")
+            diversity = len(c_struct['ids'])
+            species_abs = {}
+
+            # Populate species_abs dictionary with the abundance of each species
+            for rank in range(diversity):
+                oid = c_struct['ids'][rank]
+                species_id = self.database_get_parent_id(oid)
+                seq_ab = c_struct['abs'][rank]
+                species_abs[species_id] = species_abs.get(species_id, 0) + seq_ab
+
+            # Sort species by abundance and write to the file
+            rank = 0
+            for species_id, species_ab in sorted(species_abs.items(), key=lambda item: item[1], reverse=True):
+                rank += 1
+                species_ab *= 100  # in percentage
+                species_ab = round(species_ab,1)
+                out_file.write(f"{rank}\t{species_id}\t{species_ab}\n")

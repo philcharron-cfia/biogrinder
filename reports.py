@@ -26,4 +26,24 @@ def diversity_report(num_libraries, perc_shared, perc_permuted, overall_diversit
         nof_permuted = int(perc_permuted / 100 * overall_diversity)
         print(f"Percent permuted = {perc_permuted:.1f} % ({nof_permuted} top genomes)")
     
+def library_report(cur_lib, alphabet, forward_reverse, ranks_file, fastq_file,
+                   fasta_file, qual_file, coverage, nof_seqs, diversity):
+    coverage = "{:.1f}".format(coverage)
+    lib_alphabet = alphabet.upper()
+    
+    if "protein" in lib_alphabet.lower():
+        lib_alphabet = lib_alphabet.replace("protein", "Proteic", 1)
 
+    lib_type = 'amplicon' if forward_reverse else 'shotgun'
+    
+    print(f"{lib_alphabet} {lib_type} library {cur_lib}:")
+    print(f"   Community structure  = {ranks_file}")
+    if fastq_file:
+        print(f"   FASTQ file           = {fastq_file}")
+    if fasta_file:
+        print(f"   FASTA file           = {fasta_file}")
+    if qual_file:
+        print(f"   QUAL file            = {qual_file}")
+    print(f"   Library coverage     = {coverage} x")
+    print(f"   Number of reads      = {nof_seqs}")
+    print(f"   Diversity (richness) = {diversity}")

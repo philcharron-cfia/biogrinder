@@ -54,7 +54,7 @@ def create_parser():
     shot_amp_params.add_argument(
         '-rd', '--read_dist', 
         nargs='+',
-        default=['100'], 
+        default=[150, 'uniform', 10], 
         help=textwrap.dedent('''\
             Desired shotgun or amplicon read length distribution specified as:
             average length, distribution ('uniform' or 'normal') and standard
@@ -67,7 +67,7 @@ def create_parser():
     shot_amp_params.add_argument(
         '-id', '--insert_dist', 
         nargs='+',
-        default=['0'], 
+        default=[600, 'uniform', 50], 
         help=textwrap.dedent('''\
             Create paired-end or mate-pair reads spanning the given insert
             length. Important: the insert is defined in the biological sense,
@@ -84,7 +84,7 @@ def create_parser():
         '-mo', '--mate_orientation', 
         type=str,
         choices=['FF','FR','RF','RR'],
-        default=['FR'], 
+        default='FR', 
         help=textwrap.dedent('''\
             When generating paired-end or mate-pair reads, specify the 
             orientation of the reads (F: forward, R: reverse).
@@ -215,10 +215,10 @@ def create_parser():
             For example:
                 - To simulate Sanger errors, use a linear model where the error 
                   rate is 1%% at the 5' end of reads and 2%% at the 3' end:
-                  linear,1,2.
+                  linear 1 2.
                 - To model Illumina errors using the 4th degree polynome
                   3e-3 + 3.3e-8 * i^4 (Korbel et al 2009), use:
-                  poly4,3e-3,3.3e-8.
+                  poly4 3e-3 3.3e-8.
             Use the <mutation_ratio> option to alter how many of these
             mutations are substitutions or indels. 
             Default: %(default)s''')
@@ -408,7 +408,7 @@ def create_parser():
         '-ql', '--qual_levels', 
         type=check_int_positive_with_0,
         nargs='+',
-        default=[ ],
+        default=[40, 10], 
         help=textwrap.dedent('''\
             Generate basic quality scores for the simulated reads. Good
             residues are given a specified good score (e.g. 30) and residues
@@ -420,7 +420,7 @@ def create_parser():
         '-fq', '--fastq_output', 
         type=int,
         choices=[0,1],
-        default=0,
+        default=1,
         help=textwrap.dedent('''\
             Whether to write the generated reads in FASTQ format (with
             Sanger-encoded quality scores) instead of FASTA and QUAL or not

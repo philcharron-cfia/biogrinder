@@ -24,7 +24,6 @@ def is_option(value, options):
     else:
         return value
      
-
 def normalize(arr, total):
     # Normalize an arrayref to 1.
     if not total:
