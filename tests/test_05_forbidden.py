@@ -36,12 +36,13 @@ class Test_05_Forbidden(unittest.TestCase):
     def test_cannot_generate_read(self):
         factory = Biogrinder('-rf', 'data/dirty_database.fa',
                              '-ec', 'N-',
+                             '-rs', '1234',
                              '-rd', '71',
                              '-rs', '10',
                              '-tr', '10',
                              '-id', '0')
         factory.next_lib()
-        error_message = r'Error: Could not take a random shotgun read without forbidden characters from reference sequence seq1 \(10 attempts made\)\.'
+        error_message = r'Error: Could not take a random shotgun read without forbidden characters from reference sequence seq2 \(10 attempts made\)\.'
         with self.assertRaisesRegex(Exception, error_message):
             factory.next_read()
 

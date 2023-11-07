@@ -201,6 +201,7 @@ class KmerCollection:
         changed = False
         col_by_kmer = self._collection_by_kmer.copy()
         col_by_seq = self._collection_by_seq.copy()
+        sequences_to_remove = []
         for kmer in list(col_by_kmer.keys()):
             sources = col_by_kmer[kmer]
             num_shared = len(sources)
@@ -208,10 +209,19 @@ class KmerCollection:
                 # Remove this kmer
                 changed = True
                 del col_by_kmer[kmer]
-                for seq, seq_kmers in col_by_seq.items():
-                    seq_kmers.pop(kmer, None)
-                    if not seq_kmers:
-                        del col_by_seq[seq]
+                
+                for seq in sources:
+                    if seq in col_by_seq:
+                        seq_kmers = col_by_seq[seq]
+                        seq_kmers.pop(kmer, None)
+                        if not seq_kmers:
+                            sequences_to_remove.append(seq)
+        for seq in sequences_to_remove:
+            del col_by_seq[seq]
+                #for seq, seq_kmers in col_by_seq.items():
+                #    seq_kmers.pop(kmer, None)
+                #    if not seq_kmers:
+                #        del col_by_seq[seq]
                     
         #for kmer, sources in col_by_kmer.items():
         #    num_shared = len(sources)

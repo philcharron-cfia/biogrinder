@@ -249,9 +249,8 @@ class Biogrinder:
         community.
         '''
         nof_indep = len(c_ids)
-    
-        # Leave the first community alone, but permute the ones after
-        for c in range(2, nof_indep + 1):
+        
+        for c in range(1, nof_indep + 1):
             ids = c_ids[c-1]
             diversity = len(ids)
             
@@ -263,6 +262,7 @@ class Biogrinder:
             if nof_permuted > 0:
                 # Add shuffled top genomes
                 permuted_idxs = random.sample(range(nof_permuted), nof_permuted)
+            
                 idxs.extend(permuted_idxs)
             
             if diversity - nof_permuted > 0:
@@ -551,6 +551,7 @@ class Biogrinder:
                                     id=ref_seq.id,
                                     name=ref_seq.name,
                                     description=ref_seq.description)
+            ref_seq.seq = str(ref_seq.seq).upper()
             # Extract amplicons if needed  
             if amplicon_search:
                 amplicon_result = amplicon_search.find_amplicons(ref_seq, primer_dict)
@@ -736,7 +737,8 @@ class Biogrinder:
         if self.random_seed is not None:
             random.seed(self.random_seed)
         else:
-            self.random_seed = random.seed()
+            self.random_seed = random.randint(0, 2**32 - 1)
+            random.seed(self.random_seed)
         
         # Sequence length check
         self.max_read_length = self.read_length + self.read_delta  # approximation
@@ -1021,7 +1023,6 @@ class Biogrinder:
             
             # If chimeras are needed, update the kmer collection with sequence abundance
             kmer_col = self.chimera_kmer_col
-            #print(weights)
             if kmer_col:
                 weights = {}
                 for i in range(len(c_struct['ids'])):
@@ -1032,6 +1033,7 @@ class Biogrinder:
                 kmers, freqs = kmer_col.counts(None, 1, 1)
                 self.chimera_kmer_arr = kmers
                 self.chimera_kmer_cdf = self.proba_cumul(freqs)
+                
         else:
             c_struct = None
         return c_struct            
@@ -1259,17 +1261,17 @@ class Biogrinder:
         
         # Pick random sequences
         seqs = [sequence]
-        min_len = sequence.length
+        min_len =len(sequence)
 
         for i in range(2, m + 1):
             prev_seq = seqs[-1]
             seq = None
             while True:
                 seq = self.rand_seq(positions, oids)
-                if seq.seq.id != prev_seq.seq.id:
+                if seq.id != prev_seq.id:
                     break
             seqs.append(seq)
-            seq_len = seq.length
+            seq_len = len(seq)
             if min_len is None or seq_len < min_len:
                 min_len = seq_len
 
@@ -1286,7 +1288,7 @@ class Biogrinder:
         for i in range(1, m + 1):
             seq = seqs[i - 1]
             start = breaks.pop(0)
-            end = breaks[0] if breaks else seq.length
+            end = breaks[0] if breaks else len(seq)
             if breaks:
                 breaks[0] += 1
             pos.extend([seq, start, end])
@@ -1417,7 +1419,6 @@ class Biogrinder:
         
         kmers = kmer_arr if kmer_arr is not None else self.chimera_kmer_arr
         cdf = kmer_cdf if kmer_cdf is not None else self.chimera_kmer_cdf
-
         kmer = kmers[self.rand_weighted(cdf)]
         
         return kmer

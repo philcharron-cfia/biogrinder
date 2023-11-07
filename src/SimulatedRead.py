@@ -105,25 +105,25 @@ def new_subseq(fragnum, seq_feat, unidirectional, orientation, start, end, mid,
         qual_levels=qual_levels
     )
     newseq.reference_id = seq_feat.id
-
-    if hasattr(seq_feat, '_chimera'):
-        amplicon_desc = gen_subseq_desc(seq_feat, newseq.strand)
-        desc = newseq.description
-        desc = desc.replace("reference=", "reference= " + amplicon_desc)
+    if tracking == 1:
+        desc = gen_subseq_desc(newseq, seq_feat, newseq.strand, unidirectional)
         newseq.description = desc
 
-    if unidirectional == -1:
-        orientation *= -1
-        newseq = set_read_orientation(newseq, orientation)
+
+        if hasattr(seq_feat, '_chimera'):
+            amplicon_desc = gen_subseq_desc(newseq, seq_feat, newseq.strand, unidirectional)
+            #desc = amplicon_desc
+            #desc = desc.replace("reference=", "reference=" + amplicon_desc)
+            newseq.description = amplicon_desc
 
     return newseq
 
-def gen_subseq_desc(seq_feat, strand):
+def gen_subseq_desc(newseq, seq_feat, strand, unidirectional):
     locations = []
     if hasattr(seq_feat, '_chimera'):
         locations = seq_feat._chimera
     else:
-        locations = [seq_feat.location]
+        locations = [(newseq.start, newseq.end)]
 
     loc_strings = []
     for location in locations:
@@ -136,17 +136,10 @@ def gen_subseq_desc(seq_feat, strand):
             raise ValueError(f"Error: Strand should be -1 or 1, but got '{location}'")
         loc_strings.append(loc_str)
 
-    desc = "amplicon=" + ",".join(loc_strings)
-    return desc
+    desc = "reference=" + newseq.reference_id + " position=(" + ",".join(loc_strings) + ")"
+    if unidirectional == -1:
+        newseq.strand *= -1
+        if newseq.strand == -1:
+            desc = desc.replace("position=(", "position=complement(")
 
-def set_read_orientation(seq, new_orientation):
-    seq.strand = new_orientation
-    desc = seq.description
-    desc = desc.replace("position=", "")
-    start, end = (seq.start, seq.end)
-    if new_orientation == -1:
-        desc = desc.replace("position=", f"position=complement({start}..{end})")
-    else:
-        desc = desc.replace("position=", f"position={start}..{end}")
-    seq.description = desc
-    return seq
+    return desc

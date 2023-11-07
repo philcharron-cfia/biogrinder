@@ -40,11 +40,11 @@ def ok_mate(read, req_strand, nof_reads):
     else:
         assert strand == req_strand, "Strand does not match required strand"
 
-    letters = {'seq1': 'a',
-               'seq2': 'c',
-               'seq3': 'g',
-               'seq4': 't',
-               'seq5': 'atg',
+    letters = {'seq1': 'A',
+               'seq2': 'C',
+               'seq3': 'G',
+               'seq4': 'T',
+               'seq5': 'ATG',
                }.get(source, '')
     if req_strand == -1:  # Take the reverse complement
         letters = str(Seq(letters).reverse_complement())
