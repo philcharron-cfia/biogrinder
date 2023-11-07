@@ -1,4 +1,3 @@
-
 def diversity_report(num_libraries, perc_shared, perc_permuted, overall_diversity):
     """
     Print a diversity report detailing the overall genome diversity, the

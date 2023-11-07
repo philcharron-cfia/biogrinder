@@ -2,11 +2,11 @@ import arguments
 from AmpliconSearch import AmpliconSearch
 from KmerCollection import KmerCollection
 from SimulatedRead import *
+from misc import *
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
-from Bio.SeqFeature import SeqFeature, FeatureLocation, CompoundLocation
+from Bio.SeqFeature import FeatureLocation, CompoundLocation
 from Bio.Seq import Seq
-from misc import *
 import math
 import numpy as np
 import random
@@ -555,7 +555,6 @@ class Biogrinder:
             if amplicon_search:
                 amplicon_result = amplicon_search.find_amplicons(ref_seq, primer_dict)
                 if len(amplicon_result) > 0:
-                    #print(amplicon_result)
                     for result in amplicon_result:
                         amp_seq = result.seq
                         # Remove forbidden chars
@@ -578,12 +577,27 @@ class Biogrinder:
                             seq_ids[ref_seq.id] = {}
                         seq_ids[ref_seq.id][result.id] = None
             else:
+                shotgun_seq = ref_seq.seq
+                # Remove forbidden chars
+                if delete_chars:
+                    clean_seq = shotgun_seq
+                    for char in delete_chars:
+                        clean_seq = clean_seq.replace(char, '')
+                    # Update sequence with cleaned sequence string
+                    shotgun_seq = clean_seq
+                # Skip the sequence if it is too small
+                if len(shotgun_seq) < min_len:
+                    continue
+                # Skip the sequence if it is too long
+                if len(shotgun_seq) > maximum_length:
+                    continue
+                #barcode = ref_seq.id + "_" + primer_id
+                ref_seq.seq = shotgun_seq
                 seq_db.append(ref_seq)
                 if ref_seq.id not in seq_ids:
                     seq_ids[ref_seq.id] = {}
                 seq_ids[ref_seq.id][ref_seq.id] = None
-                print(seq_ids)
-            
+
         # Error if no usable sequences in the database
         if len(seq_ids) == 0:
             raise Exception("Error: No genome sequences could be used. If you " 
@@ -609,6 +623,7 @@ class Biogrinder:
                              "proteic reference sequences")
         
         database = {'db': seq_db, 'ids': seq_ids}
+        in_handle.close()
         return database
 
     def database_get_children_seq(self, refseqid):
@@ -970,9 +985,11 @@ class Biogrinder:
             lib_length += seqlen
 
         # Calculate number of sequences to generate based on desired coverage.
-        # If both number of reads and coverage fold were given, coverage has
-        # precedence.
-        if coverage:
+        # If both number of reads and coverage fold were given, number of reads
+        # has precedence.
+        if nof_seqs:
+            coverage = (nof_seqs * read_length) / lib_length
+        else:
             nof_seqs = (coverage * lib_length) / read_length
             nof_seqs = int(nof_seqs) + (nof_seqs % 1 > 0)  # ceiling
         coverage = (nof_seqs * read_length) / lib_length
@@ -994,7 +1011,6 @@ class Biogrinder:
         self.cur_coverage_fold = 0
         self.next_mate = None
         self.positions = None
-        
         if 0 <= self.cur_lib - 1 < len(self.c_structs):
             c_struct = self.c_structs[self.cur_lib - 1]
             # Create probabilities of picking genomes from community structure
@@ -1121,8 +1137,12 @@ class Biogrinder:
         """
         Generate a single shotgun or amplicon read.
         """
+
         oids = self.c_structs[self.cur_lib - 1]['ids']
-        mid = self.multiplex_ids[self.cur_lib - 1] if self.cur_lib - 1 in self.multiplex_ids else ''
+        if self.multiplex_ids is not None:
+            mid = self.multiplex_ids[self.cur_lib - 1] if self.cur_lib - 1 in self.multiplex_ids else ''
+        else:
+            mid = ''
         lib_num = self.cur_lib if self.num_libraries > 1 else None
         max_nof_tries = 1 if self.forward_reverse else 10
 
@@ -1133,7 +1153,7 @@ class Biogrinder:
             nof_tries += 1
             if nof_tries > max_nof_tries:
                 message = ("Error: Could not take a random shotgun read without "
-                           "forbidden characters from reference sequence " + genome.seq.id)
+                           "forbidden characters from reference sequence " + genome.id)
                 if max_nof_tries > 1:
                     message += f" ({max_nof_tries} attempts made)"
                 message += "."
@@ -1149,9 +1169,7 @@ class Biogrinder:
             max_length = len(genome) + len(mid)
             if length > max_length:
                 length = max_length
-
             start, end = self.rand_seq_pos(genome, length, self.forward_reverse, mid)
-
             shotgun_seq = new_subseq(self.cur_read, genome, self.unidirectional, orientation, start, end, mid, None, lib_num, self.desc_track, self.qual_levels)
 
             if self.homopolymer_dist or self.mutation_para1:
@@ -1614,7 +1632,7 @@ class Biogrinder:
             start = 1
         else:
             # Shotgun reads start at a random position in the genome
-            start = random.randint(1, seq_obj.length - length + 1)
+            start = random.randint(1, len(seq_obj) - length + 1)
         
         # End position
         end = start + length - 1

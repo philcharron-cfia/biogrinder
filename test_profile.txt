@@ -1,4 +1,0 @@
-# This is a comment
-base_name test2
-qual_levels 30 10
-

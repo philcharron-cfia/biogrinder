@@ -1,10 +1,11 @@
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-from Bio.SeqFeature import FeatureLocation
 
 class SimulatedRead(SeqRecord):
     def __init__(self, id, reference, start, end, strand, mid, track, coord_style, qual_levels):
         sequence = Seq(reference[start:end])
+        if strand == -1:
+            sequence = str(Seq(sequence).reverse_complement())
         super().__init__(sequence)
         self.id = id
         self.reference = reference
@@ -16,9 +17,9 @@ class SimulatedRead(SeqRecord):
         self.coord_style = coord_style
         self.qual_levels = qual_levels
         self.letter_annotations["phred_quality"] = self.generate_quality_scores(self.seq, self.qual_levels)
-        
 
-    
+
+        
     def generate_quality_scores(self, seq, qual_levels, error_specs = None):
         """
         Generate quality scores for a sequence based on the provided quality levels.
@@ -81,7 +82,7 @@ def new_subseq(fragnum, seq_feat, unidirectional, orientation, start, end, mid,
     
     # Adjust start and end if out of bounds
     start = max(1, start)
-    end = min(len(seq_feat), end)
+    end = min(len(seq_feat), end) + 1
     # Build the sequence ID
     name_sep = '_'
     mate_sep = '/'  # mate pair indicator, by convention
@@ -103,6 +104,7 @@ def new_subseq(fragnum, seq_feat, unidirectional, orientation, start, end, mid,
         coord_style='genbank',
         qual_levels=qual_levels
     )
+    newseq.reference_id = seq_feat.id
 
     if hasattr(seq_feat, '_chimera'):
         amplicon_desc = gen_subseq_desc(seq_feat, newseq.strand)

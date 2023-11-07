@@ -1,12 +1,10 @@
 import os
 import sys
 from Bio import SeqIO
-import Bio.SeqIO.FastaIO
-import Bio.SeqIO.QualityIO
 from Biogrinder import Biogrinder
 from contextlib import nullcontext
-import reports
-
+import reports as reports
+__version__ = '0.1.0'
 
 
 def biogrinder(*args):
@@ -28,6 +26,7 @@ def biogrinder(*args):
     # Generate sequences
     while True:
         c_struct = factory.next_lib()
+        
         if not c_struct:
             break
         cur_lib = factory.cur_lib
@@ -81,6 +80,8 @@ def biogrinder(*args):
         if out_fastq_file: fastq_file.close()
         if out_fasta_file: fasta_file.close()
         if out_qual_file: qual_file.close()
+    
+    return factory
 
 def main():
     biogrinder(*sys.argv[1:])

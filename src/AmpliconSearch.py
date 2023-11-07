@@ -31,7 +31,7 @@ class AmpliconSearch:
                 primer_sequence = str(record.seq)
                 primer_dict[primer_name] = primer_sequence
         if len(primer_dict) % 2 != 0:
-            raise ValueError("A primer is the provided file does not have a "
+            raise ValueError("A primer in the provided file does not have a "
                              "matching pair. Ensure each primer in the file has "
                              "a corresponding forward and reverse primer.")
         return primer_dict
@@ -77,7 +77,7 @@ class AmpliconSearch:
                             length = r[1] - f[1]
                             if length > 0:
                                 barcode = sequence.id + "_" + primer_combo + "_" + str(i)
-                                amplicon = Seq(sequence_str[f[1]:r[1]+r[2]])
+                                amplicon = Seq(sequence_str[f[1]+f[2]:r[1]])
                                 amplicon_r = SeqRecord(amplicon,
                                                        id = barcode,
                                                        name = sequence.id)
@@ -91,9 +91,9 @@ class AmpliconSearch:
                         for r in match_R:
                             length = f[1] - r[1]
                             if length > 0:
-                                combo_name = primer_combo+"_rev_"+str(i)
+                                barcode = sequence.id + "_" + primer_combo + "_rev_" + str(i)
                                 #amplicons[combo_name] = sequence_str[r[1]:f[1]+f[2]]
-                                amplicon = Seq(sequence_str[r[1]:f[1]+f[2]])
+                                amplicon = Seq(sequence_str[r[1]+r[2]:f[1]])
                                 amplicon_r = SeqRecord(amplicon,
                                                        id = barcode,
                                                        name = sequence.id)
