@@ -79,6 +79,7 @@ class Test_04_Abundances(unittest.TestCase):
                              '-lb', '0',
                              '-rs', '10',
                              '-tr', '1000',
+                             '-nl', '3',
                              '-id', '0')
         sources = get_reads(factory)
         sources = get_reads(factory)
