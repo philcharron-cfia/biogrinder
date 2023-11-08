@@ -17,6 +17,7 @@ class Test_15_Multiplex(unittest.TestCase):
                              '-nl', '1',                             
                              '-tr', '10',
                              '-rd', '52',
+                             '-rs', '1234',
                              '-id', '0')
         factory.next_lib()
         while True:
@@ -32,6 +33,7 @@ class Test_15_Multiplex(unittest.TestCase):
                              '-nl', '2',                             
                              '-tr', '10',
                              '-rd', '52',
+                             '-rs', '1234',
                              '-id', '0')
         factory.next_lib()
         while True:
