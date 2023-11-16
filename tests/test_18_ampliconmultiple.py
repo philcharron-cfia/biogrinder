@@ -1,4 +1,3 @@
-from Bio.Seq import Seq
 import os
 import re
 import sys
