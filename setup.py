@@ -1,12 +1,4 @@
 from setuptools import setup, find_packages
-import unittest
-
-def test_suite():
-    test_loader = unittest.TestLoader()
-    test_suite = test_loader.discover('.', pattern='test*.py')
-    #test_runner = unittest.TextTestRunner(verbosity=2)
-    #test_runner.run(test_suite)
-    return test_suite
 
 setup(
     name='biogrinder',
@@ -25,6 +17,5 @@ setup(
     },
     license='MIT',
     keywords='bioinformatics tools sequence-analysis',
-    python_requires='>=3.6',
-    test_suite='setup.test_suite'
+    python_requires='>=3.6'
 )
