@@ -3,7 +3,10 @@ import sys
 import unittest
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
+from functions_test import *
 from Biogrinder import Biogrinder
 
 def compare_ranks(ranks1, ranks2, rank1_perm):
@@ -54,7 +57,7 @@ def get_ranks(factory):
 class Test_09_Permuted(unittest.TestCase):
     
     def test_no_species_permuted(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database.fa',
                             '-rs', '1234',
                             '-am', 'powerlaw', '1.8',
                             '-lb', '0',
@@ -75,7 +78,7 @@ class Test_09_Permuted(unittest.TestCase):
         self.assertTrue(compare_ranks(ranks1, ranks2, rank1_perm))
 
     def test_40_species_permuted(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database.fa',
                             '-rs', '1234',
                             '-am', 'powerlaw', '1.8',
                             '-lb', '0',
@@ -96,7 +99,7 @@ class Test_09_Permuted(unittest.TestCase):
         self.assertTrue(compare_ranks(ranks1, ranks2, rank1_perm))
 
     def test_60_species_permuted(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database.fa',
                             '-rs', '1234',
                             '-am', 'powerlaw', '1.8',
                             '-lb', '0',
@@ -117,7 +120,7 @@ class Test_09_Permuted(unittest.TestCase):
         self.assertTrue(compare_ranks(ranks1, ranks2, rank1_perm))
     
     def test_80_species_permuted(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database.fa',
                             '-rs', '1234',
                             '-am', 'powerlaw', '1.8',
                             '-lb', '0',
@@ -138,7 +141,7 @@ class Test_09_Permuted(unittest.TestCase):
         self.assertTrue(compare_ranks(ranks1, ranks2, rank1_perm))
 
     def test_all_species_permuted(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database.fa',
                             '-rs', '123456',
                             '-am', 'powerlaw', '1.8',
                             '-lb', '0',
@@ -159,7 +162,7 @@ class Test_09_Permuted(unittest.TestCase):
         self.assertTrue(compare_ranks(ranks1, ranks2, rank1_perm))
 
     def test_inequal_richness(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database.fa',
                             '-rs', '123456',
                             '-am', 'powerlaw', '1.8',
                             '-lb', '0',

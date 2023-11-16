@@ -2,22 +2,23 @@ from Bio.Seq import Seq
 import os
 import sys
 import unittest
-from functions_test import *
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
+from functions_test import *
 from Biogrinder import Biogrinder
 
 class Test_32_Database(unittest.TestCase):
     def test_create_database(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database.fa')
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database.fa')
         db = factory.database
         ids = sorted(list(db['ids'].keys()))
         self.assertListEqual(ids, ['seq1', 'seq2', 'seq3', 'seq4', 'seq5'])
-
   
     def test_retrieving_sequences(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database.fa')
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database.fa')
         db = factory.database
         
         self.assertIsNone(get_seq(db, 'zzz'))

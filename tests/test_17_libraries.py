@@ -3,16 +3,18 @@ import os
 import re
 import sys
 import unittest
-from functions_test import *
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
+from functions_test import *
 from Biogrinder import Biogrinder
 from SimulatedRead import SimulatedRead
 
 class Test_17_Libraries(unittest.TestCase):
     def test_multiple_shotgun_libraries(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database.fa',
                              '-tr', '99',
                              '-rd', '48',
                              '-nl', '4',
@@ -32,7 +34,7 @@ class Test_17_Libraries(unittest.TestCase):
         self.assertEqual(nof_libs, 4)
                 
     def test_multiple_paired_end_shotgun_libraries(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database.fa',
                              '-tr', '99',
                              '-rd', '48',
                              '-nl', '4',

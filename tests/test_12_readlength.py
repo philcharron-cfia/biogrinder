@@ -2,9 +2,12 @@ import os
 import statistics
 import sys
 import unittest
-from functions_test import *
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+from functions_test import *
 from Biogrinder import Biogrinder
 
 class Test_12_ReadLength(unittest.TestCase):
@@ -12,7 +15,7 @@ class Test_12_ReadLength(unittest.TestCase):
         self.lengths = []
 
     def test_same_length_reads(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database.fa',
                             '-tr', '100',
                             '-rs', '123456',
                             '-rd', '25',
@@ -36,7 +39,7 @@ class Test_12_ReadLength(unittest.TestCase):
         self.lengths.clear()
  
     def test_uniform_distribution_length_reads(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database.fa',
                             '-tr', '1000',
                             '-rs', '123456',
                             '-rd', '50', 'uniform', '10',
@@ -65,7 +68,7 @@ class Test_12_ReadLength(unittest.TestCase):
         self.lengths.clear()
 
     def test_normal_distribution_length_reads(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database.fa',
                             '-tr', '1000',
                             '-rs', '12345',
                             '-rd', '50', 'normal', '5',

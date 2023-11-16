@@ -1,16 +1,18 @@
 import os
 import sys
 import unittest
-from functions_test import *
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
+from functions_test import *
 from Biogrinder import Biogrinder
 
 class Test_30_KmerChimeras(unittest.TestCase):
     delta = 0.2
     def test_kmer_chimeras_bimeras(self):
-        factory = Biogrinder('-rf', 'data/kmers.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/kmers.fa',
                              '-lb', '0',
                              '-un', '1',
                              '-tr', '100',
@@ -35,7 +37,7 @@ class Test_30_KmerChimeras(unittest.TestCase):
         self.assertNotIn('seq5', refs)
     
     def test_kmer_chimeras_trimeras(self):
-        factory = Biogrinder('-rf', 'data/kmers.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/kmers.fa',
                              '-lb', '0',
                              '-un', '1',
                              '-tr', '300',
@@ -60,7 +62,7 @@ class Test_30_KmerChimeras(unittest.TestCase):
         self.assertNotIn('seq5', refs)
         
     def test_kmer_chimeras_quadrameras(self):
-        factory = Biogrinder('-rf', 'data/kmers.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/kmers.fa',
                              '-lb', '0',
                              '-un', '1',
                              '-tr', '300',
@@ -85,7 +87,7 @@ class Test_30_KmerChimeras(unittest.TestCase):
         self.assertNotIn('seq5', refs)
     
     def test_kmer_chimeras_all(self):
-        factory = Biogrinder('-rf', 'data/kmers.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/kmers.fa',
                              '-lb', '0',
                              '-un', '1',
                              '-tr', '1000',
@@ -118,7 +120,7 @@ class Test_30_KmerChimeras(unittest.TestCase):
         self.assertNotIn('seq5', refs)
     
     def test_kmer_chimeras_same_abundance(self):
-        factory = Biogrinder('-rf', 'data/kmers2.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/kmers2.fa',
                              '-lb', '0',
                              '-un', '1',
                              '-tr', '1000',
@@ -142,8 +144,8 @@ class Test_30_KmerChimeras(unittest.TestCase):
         self.assertTrue(expected['seq3'] * (1 - self.delta) <= refs['seq3'] <= expected['seq3'] * (1 + self.delta))
 
     def test_kmer_chimeras_different_abundance(self):
-        factory = Biogrinder('-rf', 'data/kmers2.fa',
-                             '-af', 'data/abundance_kmers.txt',
+        factory = Biogrinder('-rf', current_dir + '/data/kmers2.fa',
+                             '-af', current_dir + '/data/abundance_kmers.txt',
                              '-lb', '0',
                              '-un', '1',
                              '-tr', '1000',

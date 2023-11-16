@@ -1,17 +1,19 @@
 import os
 import sys
 import unittest
-from functions_test import *
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
+from functions_test import *
 from Biogrinder import Biogrinder
 
 
 
 class Test_24_MateOrientation(unittest.TestCase):
     def test_FR_oriented_mates_uni_for(self):
-        factory = Biogrinder('-rf', 'data/oriented_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/oriented_database.fa',
                              '-rd', '80',
                              '-un', '1',
                              '-tr', '100',
@@ -31,7 +33,7 @@ class Test_24_MateOrientation(unittest.TestCase):
         self.assertEqual(nof_reads, factory.total_reads)
     
     def test_FR_oriented_mates_uni_rev(self):
-        factory = Biogrinder('-rf', 'data/oriented_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/oriented_database.fa',
                              '-rd', '80',
                              '-un', '-1',
                              '-tr', '100',
@@ -51,7 +53,7 @@ class Test_24_MateOrientation(unittest.TestCase):
         self.assertEqual(nof_reads, factory.total_reads)
     
     def test_FR_oriented_mates(self):
-        factory = Biogrinder('-rf', 'data/oriented_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/oriented_database.fa',
                              '-rd', '80',
                              '-un', '0',
                              '-tr', '100',
@@ -71,7 +73,7 @@ class Test_24_MateOrientation(unittest.TestCase):
         self.assertEqual(nof_reads, factory.total_reads)
     
     def test_FF_oriented_mates_uni_for(self):
-        factory = Biogrinder('-rf', 'data/oriented_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/oriented_database.fa',
                              '-rd', '80',
                              '-un', '1',
                              '-tr', '100',
@@ -91,7 +93,7 @@ class Test_24_MateOrientation(unittest.TestCase):
         self.assertEqual(nof_reads, factory.total_reads)
     
     def test_FF_oriented_mates_uni_rev(self):
-        factory = Biogrinder('-rf', 'data/oriented_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/oriented_database.fa',
                              '-rd', '80',
                              '-un', '-1',
                              '-tr', '100',
@@ -111,7 +113,7 @@ class Test_24_MateOrientation(unittest.TestCase):
         self.assertEqual(nof_reads, factory.total_reads)
     
     def test_FF_oriented_mates(self):
-        factory = Biogrinder('-rf', 'data/oriented_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/oriented_database.fa',
                              '-rd', '80',
                              '-un', '0',
                              '-tr', '100',
@@ -132,7 +134,7 @@ class Test_24_MateOrientation(unittest.TestCase):
         self.assertEqual(nof_reads, factory.total_reads)
     
     def test_RF_oriented_mates_uni_for(self):
-        factory = Biogrinder('-rf', 'data/oriented_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/oriented_database.fa',
                              '-rd', '80',
                              '-un', '1',
                              '-tr', '100',
@@ -152,7 +154,7 @@ class Test_24_MateOrientation(unittest.TestCase):
         self.assertEqual(nof_reads, factory.total_reads)
     
     def test_RF_oriented_mates_uni_rev(self):
-        factory = Biogrinder('-rf', 'data/oriented_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/oriented_database.fa',
                              '-rd', '80',
                              '-un', '-1',
                              '-tr', '100',
@@ -172,7 +174,7 @@ class Test_24_MateOrientation(unittest.TestCase):
         self.assertEqual(nof_reads, factory.total_reads)
     
     def test_RF_oriented_mates(self):
-        factory = Biogrinder('-rf', 'data/oriented_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/oriented_database.fa',
                              '-rd', '80',
                              '-un', '0',
                              '-tr', '100',
@@ -192,7 +194,7 @@ class Test_24_MateOrientation(unittest.TestCase):
         self.assertEqual(nof_reads, factory.total_reads)
 
     def test_RR_oriented_mates_uni_for(self):
-        factory = Biogrinder('-rf', 'data/oriented_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/oriented_database.fa',
                              '-rd', '80',
                              '-un', '1',
                              '-tr', '100',
@@ -212,7 +214,7 @@ class Test_24_MateOrientation(unittest.TestCase):
         self.assertEqual(nof_reads, factory.total_reads)
     
     def test_RR_oriented_mates_uni_rev(self):
-        factory = Biogrinder('-rf', 'data/oriented_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/oriented_database.fa',
                              '-rd', '80',
                              '-un', '-1',
                              '-tr', '100',
@@ -232,7 +234,7 @@ class Test_24_MateOrientation(unittest.TestCase):
         self.assertEqual(nof_reads, factory.total_reads)
     
     def test_RR_oriented_mates(self):
-        factory = Biogrinder('-rf', 'data/oriented_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/oriented_database.fa',
                              '-rd', '80',
                              '-un', '0',
                              '-tr', '100',

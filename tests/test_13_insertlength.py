@@ -2,9 +2,12 @@ import os
 import statistics
 import sys
 import unittest
-from functions_test import *
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+from functions_test import *
 from Biogrinder import Biogrinder
 
 def insert_length(mate1, mate2):
@@ -18,7 +21,7 @@ class Test_13_InsertLength(unittest.TestCase):
         self.lengths = []
 
     def test_same_size_inserts(self):
-        factory = Biogrinder('-rf', 'data/single_seq_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/single_seq_database.fa',
                             '-tr', '1000',
                             '-rs', '123456',
                             '-rd', '50',
@@ -43,7 +46,7 @@ class Test_13_InsertLength(unittest.TestCase):
         self.lengths.clear()
         
     def test_uniform_distribution_size_inserts(self):
-        factory = Biogrinder('-rf', 'data/single_seq_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/single_seq_database.fa',
                             '-tr', '1000',
                             '-rs', '123456',
                             '-rd', '50',
@@ -73,7 +76,7 @@ class Test_13_InsertLength(unittest.TestCase):
         self.lengths.clear()
         
     def test_normal_distribution_length_reads(self):
-        factory = Biogrinder('-rf', 'data/single_seq_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/single_seq_database.fa',
                             '-tr', '1000',
                             '-rs', '12345',
                             '-rd', '50',

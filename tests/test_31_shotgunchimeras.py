@@ -1,15 +1,17 @@
 import os
 import sys
 import unittest
-from functions_test import *
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
+from functions_test import *
 from Biogrinder import Biogrinder
 
 class Test_31_ShotgunChimeras(unittest.TestCase):
     def test_shotgun_chimeras(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database_shared_kmers.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database_shared_kmers.fa',
                              '-di', '5',
                              '-tr', '300',
                              '-cp', '100',
@@ -30,7 +32,7 @@ class Test_31_ShotgunChimeras(unittest.TestCase):
         self.assertIsNone(factory.next_lib())
     
     def test_partial_reference_sequences(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database_shared_kmers.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database_shared_kmers.fa',
                              '-di', '3',
                              '-tr', '300',
                              '-cp', '100',

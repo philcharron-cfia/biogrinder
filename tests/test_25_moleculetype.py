@@ -1,10 +1,12 @@
 import os
 import sys
 import unittest
-from functions_test import *
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
+from functions_test import *
 from Biogrinder import Biogrinder
 
 
@@ -12,7 +14,7 @@ from Biogrinder import Biogrinder
 class Test_25_MoleculeType(unittest.TestCase):
     def test_dna_database(self):
         dna_want_chars = set('ACGT')
-        factory = Biogrinder('-rf', 'data/database_dna.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/database_dna.fa',
                              '-rd', '240',
                              '-tr', '100',
                              '-mr', '100', '0',
@@ -30,7 +32,7 @@ class Test_25_MoleculeType(unittest.TestCase):
 
     def test_rna_database(self):
         rna_want_chars  = set('ACGU')
-        factory = Biogrinder('-rf', 'data/database_rna.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/database_rna.fa',
                              '-rd', '240',
                              '-tr', '100',
                              '-mr', '100', '0',
@@ -49,7 +51,7 @@ class Test_25_MoleculeType(unittest.TestCase):
     def test_protein_database(self):
         protein_want_chars = set('ARNDCEQGHILKMFPSTWYV')
 
-        factory = Biogrinder('-rf', 'data/database_protein.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/database_protein.fa',
                              '-rd', '240',
                              '-tr', '100',
                              '-mr', '100', '0',
@@ -68,7 +70,7 @@ class Test_25_MoleculeType(unittest.TestCase):
     def test_mixed_database(self):
 
         with self.assertRaises(Exception) as context:
-            factory = Biogrinder('-rf', 'data/database_mixed.fa',
+            factory = Biogrinder('-rf', current_dir + '/data/database_mixed.fa',
                                 '-tr', '100',
                                 '-id', '0',
                                 '-un', '1')

@@ -2,17 +2,19 @@ from Bio.Seq import Seq
 import os
 import sys
 import unittest
-from functions_test import *
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
+from functions_test import *
 from Biogrinder import Biogrinder
 from SimulatedRead import SimulatedRead
 
 class Test_28_ReverseComplementAmplicon(unittest.TestCase):
     def test_forward_reverse_primers_forward_sequencing(self):
-        factory = Biogrinder('-rf', 'data/revcom_amplicon_database.fa',
-                             '-fr', 'data/forward_reverse_primers.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/revcom_amplicon_database.fa',
+                             '-fr', current_dir + '/data/forward_reverse_primers.fa',
                              '-lb', '0',
                              '-un', '1',
                              '-rd', '48',
@@ -29,8 +31,8 @@ class Test_28_ReverseComplementAmplicon(unittest.TestCase):
         self.assertEqual(nof_reads, 100)
 
     def test_reverse_forward_primers_reverse_sequencing(self):
-        factory = Biogrinder('-rf', 'data/revcom_amplicon_database.fa',
-                             '-fr', 'data/forward_reverse_primers.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/revcom_amplicon_database.fa',
+                             '-fr', current_dir + '/data/forward_reverse_primers.fa',
                              '-lb', '0',
                              '-un', '-1',
                              '-rd', '48',

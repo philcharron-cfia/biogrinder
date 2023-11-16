@@ -1,6 +1,6 @@
 
 # The profile file first
-reference_file data/single_seq_database.fa
+reference_file tests/data/single_seq_database.fa
 read_dist 50
 total_reads 100
 unidirectional 1

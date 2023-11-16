@@ -4,14 +4,17 @@ import sys
 import unittest
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
+from functions_test import *
 from Biogrinder import Biogrinder
 
 class Test_19_GeneCopyBias(unittest.TestCase):
     def test_abundance_single_library_no_copy_bias(self):
-        factory = Biogrinder('-rf', 'data/multiple_amplicon_database.fa',
-                             '-fr', 'data/forward_reverse_primers.fa',
-                             '-af', 'data/abundances2.txt',
+        factory = Biogrinder('-rf', current_dir + '/data/multiple_amplicon_database.fa',
+                             '-fr', current_dir + '/data/forward_reverse_primers.fa',
+                             '-af', current_dir + '/data/abundances2.txt',
                              '-cb', '0',
                              '-rd', '48',
                              '-tr', '1000',
@@ -39,9 +42,9 @@ class Test_19_GeneCopyBias(unittest.TestCase):
         self.assertTrue(80 <= sources['seq3'] <= 120) 
 
     def test_abundance_single_library_copy_bias(self):
-        factory = Biogrinder('-rf', 'data/multiple_amplicon_database.fa',
-                             '-fr', 'data/forward_reverse_primers.fa',
-                             '-af', 'data/abundances2.txt',
+        factory = Biogrinder('-rf', current_dir + '/data/multiple_amplicon_database.fa',
+                             '-fr', current_dir + '/data/forward_reverse_primers.fa',
+                             '-af', current_dir + '/data/abundances2.txt',
                              '-cb', '1',
                              '-rd', '48',
                              '-tr', '1000',

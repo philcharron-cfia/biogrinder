@@ -1,16 +1,18 @@
 import os
 import sys
 import unittest
-from functions_test import *
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
+from functions_test import *
 from Biogrinder import Biogrinder
 from SimulatedRead import SimulatedRead
 
 class Test_26_CombinedErrors(unittest.TestCase):
     def test_combined_errors_uniform(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database_extended.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database_extended.fa',
                              '-un', '1',
                              '-rd', '48',
                              '-tr', '1000',
@@ -35,7 +37,7 @@ class Test_26_CombinedErrors(unittest.TestCase):
         self.assertEqual(nof_reads, 1000)
     
     def test_combined_errors_linear(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database_extended.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database_extended.fa',
                              '-un', '1',
                              '-rd', '20', 'normal', '10',
                              '-tr', '1000',

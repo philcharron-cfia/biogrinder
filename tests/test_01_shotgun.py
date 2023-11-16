@@ -5,27 +5,30 @@ import sys
 import unittest
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
+from functions_test import *
 from Biogrinder import Biogrinder
 from SimulatedRead import SimulatedRead
 
 
 class Test_01_Shotgun(unittest.TestCase):
     def test_short_arguments(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database_extended.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database_extended.fa',
                              '-tr', '10')
         self.assertIsNotNone(factory)
         self.assertTrue(factory.next_lib())
 
     def test_long_arguments(self):
-        factory = Biogrinder('--reference_file', 'data/shotgun_database_extended.fa',
+        factory = Biogrinder('--reference_file', current_dir + '/data/shotgun_database_extended.fa',
                              '--read_dist', '48',
                              '--total_reads', '100')
         self.assertIsNotNone(factory)
         self.assertTrue(factory.next_lib())
         
     def test_read_count(self):
-        factory = Biogrinder('--reference_file', 'data/shotgun_database_extended.fa',
+        factory = Biogrinder('--reference_file', current_dir + '/data/shotgun_database_extended.fa',
                                   '--read_dist', '48',
                                   '--total_reads', '100',
                                   '--insert_dis', '0')

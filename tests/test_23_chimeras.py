@@ -2,18 +2,20 @@ import os
 import re
 import sys
 import unittest
-from functions_test import *
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
+from functions_test import *
 from Biogrinder import Biogrinder
 
 
 
 class Test_23_Chimeras(unittest.TestCase):
     def test_no_chimeras(self):
-        factory = Biogrinder('-rf', 'data/amplicon_database.fa',
-                             '-fr', 'data/forward_reverse_primers.fa',     
+        factory = Biogrinder('-rf', current_dir + '/data/amplicon_database.fa',
+                             '-fr', current_dir + '/data/forward_reverse_primers.fa',     
                              '-lb', '0',
                              '-un', '1',
                              '-cp', '0',
@@ -31,8 +33,8 @@ class Test_23_Chimeras(unittest.TestCase):
             self.assertRegex(seq, r'^(A+|C+|G+|T+)+$')
    
     def test_50_percent_chimeras(self):
-        factory = Biogrinder('-rf', 'data/amplicon_database.fa',
-                             '-fr', 'data/forward_reverse_primers.fa',     
+        factory = Biogrinder('-rf', current_dir + '/data/amplicon_database.fa',
+                             '-fr', current_dir + '/data/forward_reverse_primers.fa',     
                              '-lb', '0',
                              '-un', '1',
                              '-cp', '50',
@@ -52,8 +54,8 @@ class Test_23_Chimeras(unittest.TestCase):
         self.assertAlmostEqual(nof_chimeras / nof_regulars, 1, delta=0.1)
 
     def test_100_percent_bimeras_chimeras(self):
-        factory = Biogrinder('-rf', 'data/amplicon_database.fa',
-                             '-fr', 'data/forward_reverse_primers.fa',     
+        factory = Biogrinder('-rf', current_dir + '/data/amplicon_database.fa',
+                             '-fr', current_dir + '/data/forward_reverse_primers.fa',     
                              '-lb', '0',
                              '-un', '1',
                              '-cp', '100',
@@ -69,8 +71,8 @@ class Test_23_Chimeras(unittest.TestCase):
             self.assertEqual(len(get_references(read)), 2)
     
     def test_100_percent_trimeras_chimeras(self):
-        factory = Biogrinder('-rf', 'data/amplicon_database.fa',
-                             '-fr', 'data/forward_reverse_primers.fa',     
+        factory = Biogrinder('-rf', current_dir + '/data/amplicon_database.fa',
+                             '-fr', current_dir + '/data/forward_reverse_primers.fa',     
                              '-lb', '0',
                              '-un', '1',
                              '-cp', '100',
@@ -86,8 +88,8 @@ class Test_23_Chimeras(unittest.TestCase):
             self.assertEqual(len(get_references(read)), 3)
     
     def test_100_percent_quadrameras_chimeras(self):
-        factory = Biogrinder('-rf', 'data/amplicon_database.fa',
-                             '-fr', 'data/forward_reverse_primers.fa',     
+        factory = Biogrinder('-rf', current_dir + '/data/amplicon_database.fa',
+                             '-fr', current_dir + '/data/forward_reverse_primers.fa',     
                              '-lb', '0',
                              '-un', '1',
                              '-cp', '100',
@@ -103,8 +105,8 @@ class Test_23_Chimeras(unittest.TestCase):
             self.assertEqual(len(get_references(read)), 4)
     
     def test_100_percent_all_chimeras(self):
-        factory = Biogrinder('-rf', 'data/amplicon_database.fa',
-                             '-fr', 'data/forward_reverse_primers.fa',     
+        factory = Biogrinder('-rf', current_dir + '/data/amplicon_database.fa',
+                             '-fr', current_dir + '/data/forward_reverse_primers.fa',     
                              '-lb', '0',
                              '-un', '1',
                              '-cp', '100',

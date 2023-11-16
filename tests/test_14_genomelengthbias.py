@@ -1,10 +1,12 @@
 import os
 import sys
 import unittest
-from functions_test import *
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
+from functions_test import *
 from Biogrinder import Biogrinder
 
 def insert_length(mate1, mate2):
@@ -16,8 +18,8 @@ def insert_length(mate1, mate2):
 class Test_14_GenomeLengthBias(unittest.TestCase):
 
     def test_single_library_genome_abundance(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database.fa',
-                             '-af', 'data/abundances.txt',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database.fa',
+                             '-af', current_dir + '/data/abundances.txt',
                              '-lb', '1',                             
                             '-tr', '1000',
                             '-rs', '123456',

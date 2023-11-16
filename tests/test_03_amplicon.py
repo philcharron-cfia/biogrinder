@@ -5,15 +5,18 @@ import sys
 import unittest
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
+from functions_test import *
 from Biogrinder import Biogrinder
 from SimulatedRead import SimulatedRead
 
 
 class Test_03_Amplicon(unittest.TestCase):
     def test_forward_reverse_primers_all_sequncing(self):
-        factory = Biogrinder('-rf', 'data/amplicon_database.fa',
-                             '-fr', 'data/forward_reverse_primers.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/amplicon_database.fa',
+                             '-fr', current_dir + '/data/forward_reverse_primers.fa',
                              '-lb', '0',
                              '-rd', '48',
                              '-tr', '100',
@@ -29,8 +32,8 @@ class Test_03_Amplicon(unittest.TestCase):
         self.assertEqual(nof_reads, 100)
 
     def test_forward_reverse_primers_forward_sequncing(self):
-        factory = Biogrinder('-rf', 'data/amplicon_database.fa',
-                             '-fr', 'data/forward_reverse_primers.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/amplicon_database.fa',
+                             '-fr', current_dir + '/data/forward_reverse_primers.fa',
                              '-lb', '0',
                              '-rd', '48',
                              '-tr', '100',
@@ -47,8 +50,8 @@ class Test_03_Amplicon(unittest.TestCase):
         self.assertEqual(nof_reads, 100)
 
     def test_forward_reverse_primers_reverse_sequncing(self):
-        factory = Biogrinder('-rf', 'data/amplicon_database.fa',
-                             '-fr', 'data/forward_reverse_primers.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/amplicon_database.fa',
+                             '-fr', current_dir + '/data/forward_reverse_primers.fa',
                              '-lb', '0',
                              '-rd', '48',
                              '-tr', '100',
@@ -65,8 +68,8 @@ class Test_03_Amplicon(unittest.TestCase):
         self.assertEqual(nof_reads, 100)
 
     def test_reverse_forward_primers_all_sequncing(self):
-        factory = Biogrinder('-rf', 'data/amplicon_database.fa',
-                             '-fr', 'data/reverse_forward_primers.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/amplicon_database.fa',
+                             '-fr', current_dir + '/data/reverse_forward_primers.fa',
                              '-lb', '0',
                              '-rd', '48',
                              '-tr', '100',
@@ -82,8 +85,8 @@ class Test_03_Amplicon(unittest.TestCase):
         self.assertEqual(nof_reads, 100)
 
     def test_reverse_forward_primers_forward_sequncing(self):
-        factory = Biogrinder('-rf', 'data/amplicon_database.fa',
-                             '-fr', 'data/reverse_forward_primers.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/amplicon_database.fa',
+                             '-fr', current_dir + '/data/reverse_forward_primers.fa',
                              '-lb', '0',
                              '-rd', '48',
                              '-tr', '100',
@@ -100,8 +103,8 @@ class Test_03_Amplicon(unittest.TestCase):
         self.assertEqual(nof_reads, 100)
 
     def test_reverse_forward_primers_reverse_sequncing(self):
-        factory = Biogrinder('-rf', 'data/amplicon_database.fa',
-                             '-fr', 'data/reverse_forward_primers.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/amplicon_database.fa',
+                             '-fr', current_dir + '/data/reverse_forward_primers.fa',
                              '-lb', '0',
                              '-rd', '48',
                              '-tr', '100',

@@ -3,7 +3,10 @@ import sys
 import unittest
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
+from functions_test import *
 from Biogrinder import Biogrinder
 
 class Test_07_Diversity(unittest.TestCase):
@@ -12,7 +15,7 @@ class Test_07_Diversity(unittest.TestCase):
         self.sources = {}
 
     def test_single_library_single_diversity(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database.fa',
                              '-rs', '1234',
                              '-tr', '100',
                              '-di', '2',
@@ -30,7 +33,7 @@ class Test_07_Diversity(unittest.TestCase):
         self.sources.clear()
 
     def test_two_libraries_single_diversity(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database.fa',
                              '-rs', '1234',
                              '-tr', '100',
                              '-di', '2',
@@ -60,7 +63,7 @@ class Test_07_Diversity(unittest.TestCase):
 
 
     def test_two_libraries_two_diversities(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database.fa',
                              '-rs', '1234',
                              '-tr', '100',
                              '-di', '2', '3',

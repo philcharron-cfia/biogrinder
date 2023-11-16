@@ -3,10 +3,12 @@ import re
 import statistics
 import sys
 import unittest
-from functions_test import *
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
+from functions_test import *
 from Biogrinder import Biogrinder
 
 
@@ -16,7 +18,7 @@ class Test_22_Homopolymers(unittest.TestCase):
     max_refs = 10
 
     def test_no_errors(self):
-        factory = Biogrinder('-rf', 'data/single_seq_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/single_seq_database.fa',
                              '-rd', '50',
                              '-tr', '100',
                              '-un', '1',
@@ -31,7 +33,7 @@ class Test_22_Homopolymers(unittest.TestCase):
             self.assertNotIn('errors', read.description)
         
     def test_substitutions(self):
-        factory = Biogrinder('-rf', 'data/single_seq_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/single_seq_database.fa',
                              '-rd', '50',
                              '-tr', '1000',
                              '-un', '1',
@@ -54,7 +56,7 @@ class Test_22_Homopolymers(unittest.TestCase):
                 self.assertTrue(True)
 
     def test_indels(self):
-        factory = Biogrinder('-rf', 'data/single_seq_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/single_seq_database.fa',
                              '-rd', '50',
                              '-tr', '1000',
                              '-un', '1',
@@ -76,7 +78,7 @@ class Test_22_Homopolymers(unittest.TestCase):
                 self.assertTrue(True)
                         
     def test_indels_substitutions(self):
-        factory = Biogrinder('-rf', 'data/single_seq_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/single_seq_database.fa',
                              '-rd', '50',
                              '-tr', '1000',
                              '-un', '1',
@@ -103,7 +105,7 @@ class Test_22_Homopolymers(unittest.TestCase):
         self.assertTrue(0.92 <= nof_indels/nof_subs <= 1.08)
     
     def test_uniform_frequent(self):
-        factory = Biogrinder('-rf', 'data/single_seq_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/single_seq_database.fa',
                              '-rd', '50',
                              '-tr', '1000',
                              '-un', '1',
@@ -130,7 +132,7 @@ class Test_22_Homopolymers(unittest.TestCase):
         self.assertTrue(97 <= mean_value <= 103)
 
     def test_uniform_rare(self):
-        factory = Biogrinder('-rf', 'data/single_seq_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/single_seq_database.fa',
                              '-rd', '50',
                              '-tr', '10000',
                              '-un', '1',
@@ -158,7 +160,7 @@ class Test_22_Homopolymers(unittest.TestCase):
         self.assertTrue(9 <= mean_value <= 11)
 
     def test_linear(self):
-        factory = Biogrinder('-rf', 'data/single_seq_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/single_seq_database.fa',
                              '-rd', '50',
                              '-tr', '1000',
                              '-un', '1',
@@ -185,7 +187,7 @@ class Test_22_Homopolymers(unittest.TestCase):
         self.assertTrue(97 <= mean_value <= 103)
         
     def test_polynomial(self):
-        factory = Biogrinder('-rf', 'data/single_seq_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/single_seq_database.fa',
                              '-rd', '100',
                              '-tr', '1000',
                              '-un', '1',

@@ -3,7 +3,10 @@ import sys
 import unittest
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
+from functions_test import *
 from Biogrinder import Biogrinder
 
 class Test_08_Shared(unittest.TestCase):
@@ -20,7 +23,7 @@ class Test_08_Shared(unittest.TestCase):
             self.shared[source] = None
 
     def test_no_species_shared(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database.fa',
                         '-rs', '1234',
                         '-am', 'uniform',
                         '-lb', '0',
@@ -44,7 +47,7 @@ class Test_08_Shared(unittest.TestCase):
         self.shared.clear()
 
     def test_50_species_shared(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database.fa',
                         '-rs', '1234',
                         '-am', 'uniform',
                         '-lb', '0',
@@ -68,7 +71,7 @@ class Test_08_Shared(unittest.TestCase):
         self.shared.clear()
 
     def test_67_species_shared(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database.fa',
                         '-rs', '1234',
                         '-am', 'uniform',
                         '-lb', '0',
@@ -92,7 +95,7 @@ class Test_08_Shared(unittest.TestCase):
         self.shared.clear()  
     
     def test_all_species_shared(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database.fa',
                         '-rs', '1234',
                         '-am', 'uniform',
                         '-lb', '0',
@@ -116,7 +119,7 @@ class Test_08_Shared(unittest.TestCase):
         self.shared.clear()  
         
     def test_inequal_richness(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database.fa',
                         '-rs', '1234',
                         '-am', 'uniform',
                         '-lb', '0',

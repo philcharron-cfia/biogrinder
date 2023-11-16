@@ -2,11 +2,13 @@ import os
 import statistics
 import sys
 import unittest
-from functions_test import *
 from math import exp, log
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
+from functions_test import *
 from Biogrinder import Biogrinder
 
 
@@ -16,7 +18,7 @@ class Test_20_CommunityStructure(unittest.TestCase):
     max_refs = 10
 
     def test_uniform_community_structure(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database_extended.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database_extended.fa',
                              '-rd', '48',
                              '-tr', '1000',
                              '-lb', '0',
@@ -36,7 +38,7 @@ class Test_20_CommunityStructure(unittest.TestCase):
         self.assertTrue(coeff > 0.97)
 
     def test_linear_community_structure(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database_extended.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database_extended.fa',
                              '-rd', '48',
                              '-tr', '1000',
                              '-lb', '0',
@@ -56,7 +58,7 @@ class Test_20_CommunityStructure(unittest.TestCase):
         self.assertTrue(coeff > 0.97)
 
     def test_powerlaw_community_structure(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database_extended.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database_extended.fa',
                              '-rd', '48',
                              '-tr', '1000',
                              '-lb', '0',
@@ -76,7 +78,7 @@ class Test_20_CommunityStructure(unittest.TestCase):
         self.assertTrue(coeff > 0.97)
     
     def test_logarithmic_community_structure(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database_extended.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database_extended.fa',
                              '-rd', '48',
                              '-tr', '1000',
                              '-lb', '0',
@@ -96,7 +98,7 @@ class Test_20_CommunityStructure(unittest.TestCase):
         self.assertTrue(coeff > 0.97)
     
     def test_exponential_community_structure(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database_extended.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database_extended.fa',
                              '-rd', '48',
                              '-tr', '1000',
                              '-lb', '0',

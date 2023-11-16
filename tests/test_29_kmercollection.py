@@ -3,10 +3,12 @@ from Bio.SeqRecord import SeqRecord
 import os
 import sys
 import unittest
-from functions_test import *
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
+from functions_test import *
 from KmerCollection import KmerCollection
 
 
@@ -239,7 +241,7 @@ class Test_29_KmerCollection(unittest.TestCase):
 
     def test_kmer_from_file(self):
         # Read from file (assuming the file contains sequence data)
-        file = 'data/kmers.fa'  # Replace with the actual file path
+        file = current_dir + '/data/kmers.fa'  # Replace with the actual file path
         col = KmerCollection(k=8, file=file)
         assert isinstance(col, KmerCollection)
            

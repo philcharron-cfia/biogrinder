@@ -4,15 +4,18 @@ import sys
 import unittest
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
+from functions_test import *
 from Biogrinder import Biogrinder
 from SimulatedRead import SimulatedRead
 
 
 class Test_18_AmpliconMultiple(unittest.TestCase):
     def test_forward_reverse_primers_multiple_amplicons(self):
-        factory = Biogrinder('-rf', 'data/multiple_amplicon_database.fa',
-                             '-fr', 'data/forward_reverse_primers.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/multiple_amplicon_database.fa',
+                             '-fr', current_dir + '/data/forward_reverse_primers.fa',
                              '-lb', '0',
                              '-rd', '100',
                              '-tr', '100',

@@ -3,14 +3,17 @@ import sys
 import unittest
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
+from functions_test import *
 from Biogrinder import Biogrinder
 
 class Test_04_Abundances(unittest.TestCase):
 
     def test_single_shotgun_library_abundance(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database_extended.fa',
-                             '-af', 'data/abundances.txt',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database_extended.fa',
+                             '-af', current_dir + '/data/abundances.txt',
                              '-lb', '0',
                              '-rs', '10',
                              '-tr', '1000',
@@ -41,9 +44,9 @@ class Test_04_Abundances(unittest.TestCase):
         sources.clear()
 
     def test_single_amplicon_library_abundance(self):
-        factory = Biogrinder('-rf', 'data/amplicon_database.fa',
-                             '-af', 'data/abundances2.txt',
-                             '-fr', 'data/forward_reverse_primers.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/amplicon_database.fa',
+                             '-af', current_dir + '/data/abundances2.txt',
+                             '-fr', current_dir + '/data/forward_reverse_primers.fa',
                              '-lb', '0',
                              '-cb', '0',
                              '-un', '1',
@@ -76,8 +79,8 @@ class Test_04_Abundances(unittest.TestCase):
         self.assertIsNone(factory.next_lib())
         sources.clear()
     def test_multiple_shotgun_libraries_abundance(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database_extended.fa',
-                             '-af', 'data/abundances_multiple.txt',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database_extended.fa',
+                             '-af', current_dir + '/data/abundances_multiple.txt',
                              '-lb', '0',
                              '-rs', '10',
                              '-tr', '1000',

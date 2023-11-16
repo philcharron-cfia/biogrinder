@@ -3,13 +3,16 @@ import sys
 import unittest
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
+from functions_test import *
 from Biogrinder import Biogrinder
 
 class Test_06_Seed(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.factory = Biogrinder('-rf', 'data/shotgun_database_extended.fa',
+        cls.factory = Biogrinder('-rf', current_dir + '/data/shotgun_database_extended.fa',
                                       '-tr', '10',
                                       '-id', '0')
         cls.seed2 = cls.factory.random_seed
@@ -22,7 +25,7 @@ class Test_06_Seed(unittest.TestCase):
             cls.dataset1.append(read)
 
     def test_set_the_seed(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database_extended.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database_extended.fa',
                              '-rs', '1234',
                              '-tr', '10',
                              '-id', '0')
@@ -33,7 +36,7 @@ class Test_06_Seed(unittest.TestCase):
         self.assertGreater(Test_06_Seed.seed2, 0, "Get a seed automatically")
 
     def test_specify_the_same_seed(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database_extended.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database_extended.fa',
                              '-tr', '10',
                              '-rs', str(Test_06_Seed.seed2),
                              '-id', '0')

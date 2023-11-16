@@ -3,13 +3,16 @@ import sys
 import unittest
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
+from functions_test import *
 from Biogrinder import Biogrinder
 
 class Test_10_Quality(unittest.TestCase):
     
     def test_with_quality_scores(self):
-        factory = Biogrinder('-rf', 'data/shotgun_database_extended.fa',
+        factory = Biogrinder('-rf', current_dir + '/data/shotgun_database_extended.fa',
                             '-rd', '52',
                             '-tr', '10',
                             '-ql', '30', '10',

@@ -1,0 +1,11 @@
+Metadata-Version: 2.1
+Name: biogrinder
+Version: 0.1.0
+Summary: Grinder is a versatile open-source bioinformatic tool to create simulated omic shotgun and amplicon sequence libraries.
+Home-page: https://github.com/philcharron-cfia/biogrinder
+Author: Phil Charron
+Author-email: phil.charron@inspection.gc.ca
+License: MIT
+Keywords: bioinformatics tools sequence-analysis
+Requires-Python: >=3.6
+License-File: LICENSE
