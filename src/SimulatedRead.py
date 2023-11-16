@@ -2,10 +2,15 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
 class SimulatedRead(SeqRecord):
-    def __init__(self, id, reference, start, end, strand, mid, track, coord_style, qual_levels):
+    def __init__(self, id, reference, start, end, strand, mid, alphabet, track, coord_style, qual_levels):
         sequence = Seq(reference[start:end])
         if strand == -1:
-            sequence = str(Seq(sequence).reverse_complement())
+            if alphabet == "dna":
+                sequence = str(Seq(sequence).reverse_complement())
+            elif alphabet == "rna":
+                sequence = str(Seq(sequence).reverse_complement_rna())
+
+        sequence = Seq(mid) + sequence
         super().__init__(sequence)
         self.id = id
         self.reference = reference
@@ -17,8 +22,6 @@ class SimulatedRead(SeqRecord):
         self.coord_style = coord_style
         self.qual_levels = qual_levels
         self.letter_annotations["phred_quality"] = self.generate_quality_scores(self.seq, self.qual_levels)
-
-
         
     def generate_quality_scores(self, seq, qual_levels, error_specs = None):
         """
@@ -46,7 +49,10 @@ class SimulatedRead(SeqRecord):
 
         # Modify the sequence based on error specifications
         seq_list = list(self.seq)
-        
+
+        desc = self.description 
+        desc = desc + " errors="
+        self.description = desc
 
         for position, mutations in sorted(error_specs.items(), key=lambda x: x[0]):
             # 0-based position adjustment
@@ -68,20 +74,24 @@ class SimulatedRead(SeqRecord):
 
     def _apply_error(self, seq_list, position, mut_type, value):
         """Apply a single error to the sequence list."""
+        desc = self.description 
+            
         if 0 <= position < len(seq_list):  # Ensure position is within valid range
+            desc = desc + "," + str(position+1) + mut_type + seq_list[position]
             if mut_type == '%':  # Substitution
-                seq_list[position] = value
+                seq_list[position] = value   
             elif mut_type == '+':  # Insertion
                 seq_list.insert(position + 1, value)
             elif mut_type == '-':  # Deletion
                 del seq_list[position]
-        
+            
+        self.description = desc
 
-def new_subseq(fragnum, seq_feat, unidirectional, orientation, start, end, mid,
+def new_subseq(fragnum, seq_feat, unidirectional, orientation, start, end, mid, alphabet,
                mate_number=None, lib_number=None, tracking=None, qual_levels=None):
     
     # Adjust start and end if out of bounds
-    start = max(1, start)
+    start = max(0, start)
     end = min(len(seq_feat), end) + 1
     # Build the sequence ID
     name_sep = '_'
@@ -100,6 +110,7 @@ def new_subseq(fragnum, seq_feat, unidirectional, orientation, start, end, mid,
         end=end,
         strand=orientation,
         mid=mid,
+        alphabet=alphabet,
         track=tracking,
         coord_style='genbank',
         qual_levels=qual_levels

@@ -9,8 +9,8 @@ from Biogrinder import Biogrinder
 
 def insert_length(mate1, mate2):
     if mate1.end > mate2.end:
-        mate1, mate2 = mate2, mate1
-    length = mate2.end - mate1.start + 1
+        mate1, mate2 = mate2, mate1    
+    length = mate2.end - mate1.start
     return length
 
 class Test_13_InsertLength(unittest.TestCase):
@@ -75,7 +75,7 @@ class Test_13_InsertLength(unittest.TestCase):
     def test_normal_distribution_length_reads(self):
         factory = Biogrinder('-rf', 'data/single_seq_database.fa',
                             '-tr', '1000',
-                            '-rs', '123456',
+                            '-rs', '12345',
                             '-rd', '50',
                             '-id', '150', 'normal', '10')
         factory.next_lib()

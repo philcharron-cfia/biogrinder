@@ -18,7 +18,6 @@ class Biogrinder:
         # Initialize the Biogrinder object with any necessary parameters
         self.args = args
         self.args = self.argparse()
-        #print(self.args)
         self.initialize() 
 
     def argparse(self):
@@ -29,10 +28,8 @@ class Biogrinder:
         args = parser.parse_args(self.args)    
         if args.profile_file:
             self.process_profile_file(args)
-        else:
-            # Set instance attributes from parsed arguments
-            for arg, value in vars(args).items():
-                setattr(self, arg, value)
+        for arg, value in vars(args).items():
+            setattr(self, arg, value)
         return args 
     
     def assemble_chimera(self, *pos):
@@ -45,11 +42,12 @@ class Biogrinder:
         chimera_id = ''
         chimera_seq = ''
         locations = []
-        pos = pos[:6]
         
         while pos:
+            #print(pos)
             seq, start, end = pos[0], pos[1], pos[2]
             pos = pos[3:]
+            #print(pos)
             # Add amplicon position to the locations list
             locations.append(FeatureLocation(start, end))
 
@@ -542,15 +540,26 @@ class Biogrinder:
             # Record molecule type
             seq_type = identify_sequence_type(ref_seq.seq)
             mol_types[seq_type] = mol_types.get(seq_type, 0) + 1
+            
+            # Determine database type: dna, rna, protein
+            db_alphabet = self.database_get_mol_type(mol_types)
+            self.alphabet = db_alphabet
+            
             # Skip unwanted sequences
             if ids_to_keep and ref_seq.id not in ids_to_keep:
                 continue
             # If we are sequencing from the reverse strand, reverse complement now
             if unidirectional == -1:
-                ref_seq = SeqRecord(ref_seq.seq.reverse_complement(),
-                                    id=ref_seq.id,
-                                    name=ref_seq.name,
-                                    description=ref_seq.description)
+                if self.alphabet == "dna":
+                    ref_seq = SeqRecord(ref_seq.seq.reverse_complement(),
+                                        id=ref_seq.id,
+                                        name=ref_seq.name,
+                                        description=ref_seq.description)
+                elif self.alphabet == "rna":
+                    ref_seq = SeqRecord(ref_seq.seq.reverse_complement_rna(),
+                                        id=ref_seq.id,
+                                        name=ref_seq.name,
+                                        description=ref_seq.description)
             ref_seq.seq = str(ref_seq.seq).upper()
             # Extract amplicons if needed  
             if amplicon_search:
@@ -608,10 +617,6 @@ class Biogrinder:
                             "primers, verify that they match some genome "
                             "sequences.")
 
-        # Determine database type: dna, rna, protein
-        db_alphabet = self.database_get_mol_type(mol_types)
-        
-        self.alphabet = db_alphabet
         # Error if using amplicon on protein database
         if db_alphabet == 'protein' and forward_reverse_primers is not None:
             raise ValueError("Error: Cannot use amplicon primers with proteic "
@@ -684,14 +689,17 @@ class Biogrinder:
         return seq_obj
     
     def initialize(self):
-        # Parameter processing - read_dist  
+        # Parameter processing - read_dist
+        if isinstance(self.read_dist, str):
+            self.read_dist = [self.read_dist]
+    
         self.read_length = is_int(self.read_dist[0] if len(self.read_dist) > 0 else 100)
         self.read_model = is_option(self.read_dist[1] if len(self.read_dist) > 1 else 'uniform',
                                     ['uniform', 'normal'])
         self.read_delta = is_int(self.read_dist[2] if len(self.read_dist) > 2 else 0)
-
+        
         # Parameter processing - insert_dist
-        self.mate_length = is_int(self.insert_dist[0] if len(self.insert_dist) > 0 else 0)
+        self.mate_length = is_int(int(self.insert_dist[0]) if len(self.insert_dist) > 0 else 0) 
         self.mate_model = is_option(self.insert_dist[1] if len(self.insert_dist) > 1 else 'uniform',
                                     ['uniform', 'normal'])
         self.mate_delta = is_int(self.insert_dist[2] if len(self.insert_dist) > 2 else 0)
@@ -735,7 +743,7 @@ class Biogrinder:
         
         # Random number generator: seed or be auto-seeded
         if self.random_seed is not None:
-            random.seed(self.random_seed)
+            random.seed(int(self.random_seed))
         else:
             self.random_seed = random.randint(0, 2**32 - 1)
             random.seed(self.random_seed)
@@ -898,6 +906,8 @@ class Biogrinder:
             pool = self.chimera_kmer_pool.get(m, [])
         else:
             pool = None
+            self.chimera_kmer_pool = {}
+
         
         if pool:
             # Pick a chimera from the pool if possible
@@ -933,7 +943,7 @@ class Biogrinder:
                 else:
                     # We got a suitable chimera... done
                     break
-
+        
         return frags
 
     def kmer_chimera_fragments_backend(self, m):
@@ -944,18 +954,20 @@ class Biogrinder:
 
         # Initial pair of fragments
         pos = self.rand_kmer_chimera_initial()       
-
         # Append sequence to chimera
         for i in range(3, m + 1):
-
+            
             seqid1, start1, end1, seqid2, start2, end2 = self.rand_kmer_chimera_extend(pos[-3], pos[-2], pos[-1])
-
             if seqid2 is None:
                 # Could not find a sequence that shared a suitable kmer
                 break
 
-            pos[-3:-1] = [seqid1, start1, end1]
+            pos[-3] = seqid1
+            pos[-2] = start1
+            pos[-1] = end1
+
             pos.extend([seqid2, start2, end2])
+            
 
         # Put sequence objects instead of sequence IDs
         i = 0
@@ -964,7 +976,6 @@ class Biogrinder:
             seq = self.database_get_seq(seqid)
             pos[i] = seq
             i += 3
-
         return pos
 
     def lib_coverage(self, c_struct):
@@ -973,8 +984,8 @@ class Biogrinder:
         If the number of sequences is provided, calculate the coverage.
         """
         coverage = self.coverage_fold
-        nof_seqs = self.total_reads
-        read_length = self.read_length
+        nof_seqs = int(self.total_reads)
+        read_length = int(self.read_length)
 
         # Calculate library length and size
         ref_ids = c_struct['ids']
@@ -1040,7 +1051,11 @@ class Biogrinder:
 
     def next_mate_pair(self):
         oids = self.c_structs[self.cur_lib - 1]['ids']
-        mid = self.multiplex_ids[self.cur_lib - 1] if self.multiplex_ids and self.cur_lib - 1 in self.multiplex_ids else ''
+        if self.multiplex_ids is not None:
+            mid_index = self.cur_lib - 1
+            mid = self.multiplex_ids[mid_index] if 0 <= mid_index < len(self.multiplex_ids) else ''
+        else:
+            mid = ''
         lib_num = self.cur_lib if self.num_libraries > 1 else None
         pair_num = int(self.cur_read / 2 + 0.5)
         max_nof_tries = 1 if self.forward_reverse else 10
@@ -1068,13 +1083,11 @@ class Biogrinder:
             
             orientation = 1 if self.unidirectional != 0 else self.rand_seq_orientation()
             mate_length = self.rand_seq_length(self.mate_length, self.mate_model, self.mate_delta)
-            
             max_length = len(genome) + len(mid)
             if mate_length > max_length:
                 mate_length = max_length
             
             mate_start, mate_end = self.rand_seq_pos(genome, mate_length, self.forward_reverse, mid)
-            
             read_length = self.rand_seq_length(self.read_length, self.read_model, self.read_delta)
             seq_1_start, seq_1_end = mate_start, mate_start + read_length - 1
             read_length = self.rand_seq_length(self.read_length, self.read_model, self.read_delta)
@@ -1088,7 +1101,8 @@ class Biogrinder:
             
             # Generate first mate read
             shotgun_seq_1 = new_subseq(pair_num, genome, self.unidirectional,
-                                            mate_1_orientation, seq_1_start, seq_1_end, mid, '1', lib_num,
+                                            mate_1_orientation, seq_1_start, seq_1_end, mid,
+                                            self.alphabet, '1', lib_num,
                                             self.desc_track, self.qual_levels)
             if self.homopolymer_dist or self.mutation_para1:
                 shotgun_seq_1 = self.rand_seq_errors(shotgun_seq_1)
@@ -1097,7 +1111,8 @@ class Biogrinder:
             
             # Generate second mate read
             shotgun_seq_2 = new_subseq(pair_num, genome, self.unidirectional,
-                                            mate_2_orientation, seq_2_start, seq_2_end, mid, '2', lib_num,
+                                            mate_2_orientation, seq_2_start, seq_2_end, mid,
+                                            self.alphabet, '2', lib_num,
                                             self.desc_track, self.qual_levels)
             if self.homopolymer_dist or self.mutation_para1:
                 shotgun_seq_2 = self.rand_seq_errors(shotgun_seq_2)
@@ -1141,10 +1156,14 @@ class Biogrinder:
         """
 
         oids = self.c_structs[self.cur_lib - 1]['ids']
+        
         if self.multiplex_ids is not None:
-            mid = self.multiplex_ids[self.cur_lib - 1] if self.cur_lib - 1 in self.multiplex_ids else ''
+            mid_index = self.cur_lib - 1
+            #mid = self.multiplex_ids[self.cur_lib - 1] if self.cur_lib - 1 in self.multiplex_ids else ''
+            mid = self.multiplex_ids[mid_index] if 0 <= mid_index < len(self.multiplex_ids) else ''
         else:
             mid = ''
+
         lib_num = self.cur_lib if self.num_libraries > 1 else None
         max_nof_tries = 1 if self.forward_reverse else 10
 
@@ -1172,7 +1191,8 @@ class Biogrinder:
             if length > max_length:
                 length = max_length
             start, end = self.rand_seq_pos(genome, length, self.forward_reverse, mid)
-            shotgun_seq = new_subseq(self.cur_read, genome, self.unidirectional, orientation, start, end, mid, None, lib_num, self.desc_track, self.qual_levels)
+            shotgun_seq = new_subseq(self.cur_read, genome, self.unidirectional, orientation, start, end, mid,
+                                     self.alphabet, None, lib_num, self.desc_track, self.qual_levels)
 
             if self.homopolymer_dist or self.mutation_para1:
                 shotgun_seq = self.rand_seq_errors(shotgun_seq)
@@ -1247,8 +1267,9 @@ class Biogrinder:
                     arg_name, arg_value_str = line.split(' ', 1)
                     arg_values = arg_value_str.split()
                     if hasattr(args, arg_name):
-                        setattr(args, arg_name, arg_values[0] if
-                                len(arg_values) == 1 else arg_values)
+                        value = arg_values[0] if len(arg_values) == 1 else arg_values
+                        setattr(args, arg_name, value)
+                        setattr(self, arg_name, value)
                     else:
                         print(f"Warning: {arg_name} is not a recognized argument.")
         except FileNotFoundError:
@@ -1261,7 +1282,7 @@ class Biogrinder:
         
         # Pick random sequences
         seqs = [sequence]
-        min_len =len(sequence)
+        min_len = len(sequence)
 
         for i in range(2, m + 1):
             prev_seq = seqs[-1]
@@ -1319,7 +1340,7 @@ class Biogrinder:
             else:
                 raise ValueError(f"Unknown homopolymer distribution '{self.homopolymer_dist}'")
 
-            new_len = int(len_homopolymer + stddev * np.random.randn() + 0.5)
+            new_len = int(len_homopolymer + stddev * random.random() + 0.5)
             new_len = max(0, new_len)  # make sure new_len isn't negative
             diff = new_len - len_homopolymer
 
@@ -1355,18 +1376,23 @@ class Biogrinder:
             kmer = self.rand_kmer_from_collection(kmer_arr, kmer_cdf)
 
             # Get a sequence that has the same kmer as the first but is not the first
-            seqid2 = self.rand_seq_with_kmer(kmer, seqid1)
+            if kmer is not None:
+                seqid2 = self.rand_seq_with_kmer(kmer, seqid1)
 
             # Pick a suitable kmer start on that sequence
             if seqid2 is not None:
 
                 # Pick a random breakpoint
-                # TODO: can we prefer a position not too crazy?
+                middle = int(self.chimera_kmer / 2)
                 pos1 = self.rand_kmer_start(kmer, seqid1, start1)
-                pos2 = self.rand_kmer_start(kmer, seqid2)
+                pos2 = self.rand_kmer_start(kmer, seqid2, start1 + middle)
+                if pos1 is None or pos2 is None:
+                    return seqid1, start1, end1, None, None, None
+                if pos1 > pos2:
+                    pos2, pos1 = pos1, pos2
 
                 # Place breakpoint about the middle of the kmer (kmers are at least 2 bp long) 
-                middle = int(self.chimera_kmer / 2)
+                #middle = int(self.chimera_kmer / 2)
                 end1 = pos1 + middle - 1
                 start2 = pos2 + middle
                 end2 = len(self.database_get_seq(seqid2).seq)
@@ -1419,8 +1445,11 @@ class Biogrinder:
         
         kmers = kmer_arr if kmer_arr is not None else self.chimera_kmer_arr
         cdf = kmer_cdf if kmer_cdf is not None else self.chimera_kmer_cdf
-        kmer = kmers[self.rand_weighted(cdf)]
-        
+        index = self.rand_weighted(cdf)
+        if index < len(kmers)   :
+            kmer = kmers[self.rand_weighted(cdf)]
+        else:
+            kmer = None
         return kmer
 
 
@@ -1461,8 +1490,7 @@ class Biogrinder:
         return None
 
     def rand_point_errors(self, seq_str, error_specs):
-        seq_len = len(seq_str)
-        
+        seq_len = len(seq_str)        
         if not hasattr(self, 'mutation_cdf'):
             self.mutation_cdf = {}
             self.mutation_avg = {}
@@ -1492,6 +1520,7 @@ class Biogrinder:
                 for i in range(seq_len):
                     val = self.mutation_para1 + self.mutation_para2 * (i+1)**4
                     mut_pdf.append(val)
+                    
                     mut_sum += val
                 mut_freq = mut_sum / seq_len
 
@@ -1506,22 +1535,23 @@ class Biogrinder:
 
         mut_cdf = self.mutation_cdf[seq_len]
         mut_avg = self.mutation_avg[seq_len]
-        read_mutation_freq = mut_avg + 0.3 * mut_avg * np.random.randn()
-        nof_mutations = int(seq_len * read_mutation_freq / 100 + np.random.rand())
+        read_mutation_freq = mut_avg + 0.1 * mut_avg * random.random()
+        nof_mutations = int(seq_len * read_mutation_freq / 100 + random.random())
+        
 
         if nof_mutations == 0:
             return error_specs
 
         subst_frac = self.mutation_ratio[0] / 100
         for _ in range(nof_mutations):
-            idx = np.searchsorted(mut_cdf, np.random.rand())
+            idx = np.searchsorted(mut_cdf, random.random(), side='right')
             if idx not in error_specs:
                 error_specs[idx] = {}
 
-            if np.random.rand() <= subst_frac:
+            if random.random() <= subst_frac:
                 error_specs[idx]['%'] = self.rand_res(seq_str[idx])
             else:
-                if np.random.rand() < 0.5:
+                if random.random() < 0.5:
                     error_specs[idx]['+'] = self.rand_res()
                 else:
                     if len(seq_str) > 1:
@@ -1564,7 +1594,7 @@ class Biogrinder:
 
             # Pick multimera size
             m = self.rand_chimera_size()
-
+            
             # Pick chimera fragments
             if self.chimera_kmer:
                 pos = self.kmer_chimera_fragments(m)
@@ -1609,7 +1639,7 @@ class Biogrinder:
                 return min_val + int(random.uniform(0, 1) * (max_val - min_val + 1))
             elif model == 'normal':
                 # Gaussian distribution: decimal number normally distribution in N(avg,stddev)
-                length = avg + stddev * np.random.randn()
+                length = random.gauss(avg, stddev)
                 return max(1, int(length + 0.5))
             else:
                 raise ValueError(f"Error: '{model}' is not a supported read or insert length distribution")
@@ -1628,12 +1658,13 @@ class Biogrinder:
         length = read_length - len(mid)
         
         # Pick starting position
-        if amplicon:
+        if amplicon and self.start_primers == '1':
             # Amplicon always starts at the first position of the amplicon
-            start = 1
+            start = 0
         else:
             # Shotgun reads start at a random position in the genome
-            start = random.randint(1, len(seq_obj) - length + 1)
+            start = random.randint(0, len(seq_obj) - length)
+
         
         # End position
         end = start + length - 1

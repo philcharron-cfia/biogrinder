@@ -1,5 +1,6 @@
 import random
 import math
+import numpy as np
 
 def is_int(value):
     try:
@@ -50,7 +51,7 @@ def randig(mu, lambda_):
     """
     Random value sampled from the inverse gaussian (a.k.a. Wald) distribution,
     using the method at http://en.wikipedia.org/wiki/Inverse_Gaussian_distribution
-    """
+    
     y = random.gauss(0, 1)**2  
     x = mu + (mu**2 * y) / (2 * lambda_) - mu / (2 * lambda_) * math.sqrt(4 * mu * lambda_ * y + mu**2 * y**2)
     if random.random() <= mu / (mu + x):
@@ -58,4 +59,5 @@ def randig(mu, lambda_):
     else:
         y = mu**2 / x
     return y 
-
+    """
+    return np.random.wald(mu, lambda_)

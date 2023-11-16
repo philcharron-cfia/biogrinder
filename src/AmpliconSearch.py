@@ -30,6 +30,7 @@ class AmpliconSearch:
                 primer_name = record.id
                 primer_sequence = str(record.seq)
                 primer_dict[primer_name] = primer_sequence
+        file.close()
         if len(primer_dict) % 2 != 0:
             raise ValueError("A primer in the provided file does not have a "
                              "matching pair. Ensure each primer in the file has "
@@ -74,10 +75,10 @@ class AmpliconSearch:
                 for f in match_F:
                     for match_R_rc in match_R_rc_array:
                         for r in match_R_rc:             
-                            length = r[1] - f[1]
+                            length = r[1] + r[2] - f[1]
                             if length > 0:
-                                barcode = sequence.id + "_" + primer_combo + "_" + str(i)
-                                amplicon = Seq(sequence_str[f[1]+f[2]:r[1]])
+                                barcode = sequence.id + "_" + primer_combo + "_LEN"  + str(length) + "_" + str(i)
+                                amplicon = Seq(sequence_str[f[1]:r[1]+r[2]])
                                 amplicon_r = SeqRecord(amplicon,
                                                        id = barcode,
                                                        name = sequence.id)
@@ -89,11 +90,11 @@ class AmpliconSearch:
                 for f in match_F_rc:
                     for match_R in match_R_array:
                         for r in match_R:
-                            length = f[1] - r[1]
+                            length = f[1] + f[2] - r[1]
                             if length > 0:
-                                barcode = sequence.id + "_" + primer_combo + "_rev_" + str(i)
+                                barcode = sequence.id + "_" + primer_combo + "_rev_LEN" + str(length) + "_" + str(i)
                                 #amplicons[combo_name] = sequence_str[r[1]:f[1]+f[2]]
-                                amplicon = Seq(sequence_str[r[1]+r[2]:f[1]])
+                                amplicon = Seq(sequence_str[r[1]:f[1]+f[2]])
                                 amplicon_r = SeqRecord(amplicon,
                                                        id = barcode,
                                                        name = sequence.id)

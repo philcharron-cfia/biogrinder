@@ -67,7 +67,7 @@ class Test_12_ReadLength(unittest.TestCase):
     def test_normal_distribution_length_reads(self):
         factory = Biogrinder('-rf', 'data/shotgun_database.fa',
                             '-tr', '1000',
-                            '-rs', '123456',
+                            '-rs', '12345',
                             '-rd', '50', 'normal', '5',
                             '-id', '0')
         factory.next_lib()

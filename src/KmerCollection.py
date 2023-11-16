@@ -173,19 +173,24 @@ class KmerCollection:
         changed = False
         col_by_kmer = self._collection_by_kmer.copy()
         col_by_seq = self._collection_by_seq.copy()
-        for kmer, sources in col_by_kmer.items():
+
+        for kmer in list(col_by_kmer.keys()):  # Iterate over a list of keys
+            sources = col_by_kmer[kmer]
             count = self.sum_from_sources(sources)
             if count < min_num:
                 # Remove this kmer
                 changed = True
                 del col_by_kmer[kmer]
-                for seq, seq_kmers in col_by_seq.items():
-                    seq_kmers.pop(kmer, None)
-                    if not seq_kmers:
-                        del col_by_seq[seq]
+                for seq in sources:
+                    if kmer in col_by_seq[seq]:
+                        del col_by_seq[seq][kmer]
+                        if not col_by_seq[seq]:
+                            del col_by_seq[seq]
+
         if changed:
             self._collection_by_kmer = col_by_kmer
             self._collection_by_seq = col_by_seq
+
         return self
 
     def filter_shared(self, min_shared):
@@ -256,16 +261,18 @@ class KmerCollection:
         kmers = []
         counts = []
         total = 0
-
+        
         for kmer, sources in self._collection_by_kmer.items():
+            
             count = self.sum_from_sources(sources, id, start)
             if count > 0:
                 kmers.append(kmer)
                 counts.append(count)
                 total += count
-        
+
         if freq and total:
             counts = normalize(counts, total)
+            
         
         return kmers, counts
 

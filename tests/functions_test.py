@@ -1,4 +1,7 @@
 import numpy as np
+import os
+import re
+import sys
 import math
 from scipy.stats import norm
 
@@ -28,3 +31,29 @@ def corr_coeff(y, f, mean):
     SStot = sum((yi - mean) ** 2 for yi in y)
     R2 = 1 - (SSerr / SStot)
     return R2
+
+def blockPrint():
+    sys.stdout = open(os.devnull, 'w')
+
+def error_positions(read):
+    error_positions = []
+    match = re.search(r'errors=(\S+)', read.description)
+    
+    if match:
+        err_str = match.group(1)
+        errors = err_str.split(',')
+        for error in errors:
+            match = re.match(r'(\d+)([%+-])([a-z]*)', error, re.I)
+            if match:
+                pos = int(match.group(1))
+                error_positions.append(pos)
+
+    return error_positions
+
+def get_references(read):
+    """
+    Get the number of references that a read comes from.
+    """
+    desc = read.description
+    refs = desc.split('reference=')[1].split(' ')[0]
+    return refs.split(',')

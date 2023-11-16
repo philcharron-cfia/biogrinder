@@ -139,6 +139,19 @@ def create_parser():
             <copy_bias> = 1 and <length_bias> = 0 to generate amplicon reads.''')
     )
     shot_amp_params.add_argument(
+        '-st', '--start_primers',
+        type=str,
+        choices=['0','1'],
+        default='0',
+        help=textwrap.dedent('''\
+            If running amplicon sequencing option, start all reads at either 
+            primer attachment sites.
+            Option:
+                - 0 (off, reads will start anywhere in amplicon)
+                - 1 (on, reads will start only from primers)
+            Default: %(default)s''')
+    )
+    shot_amp_params.add_argument(
         '-ml', '--maximum_length', 
         type=int,
         default=10000,
@@ -456,9 +469,9 @@ def create_parser():
                 # A simple Biogrinder profile
                 read_dist 105 normal 12
                 total_reads 1000
-            Running: biogrinder -reference_file viral_genomes.fa -profile_file 
+            Running: biogrinder --reference_file viral_genomes.fa --profile_file 
                 simple_profile.txt
-            Translates into: biogrinder -reference_file viral_genomes.fa
+            Translates into: biogrinder --reference_file viral_genomes.fa
                 --read_dist 105 normal 12 --total_reads 1000
             Note that the arguments specified in the profile should not be
             specified again on the command line.''')    

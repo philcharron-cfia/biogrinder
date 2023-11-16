@@ -47,14 +47,16 @@ class Test_04_Abundances(unittest.TestCase):
                              '-lb', '0',
                              '-cb', '0',
                              '-un', '1',
-                             '-rd', '48',
-                             '-rs', '10',
+                             '-rd', '25',
+                             '-rs', '1234',
                              '-tr', '1000',
+                             '-st', '1',
                              '-id', '0')
         factory.next_lib()
         sources = {}
         while True:
             read = factory.next_read()
+            
             if not read:
                 break
             source = read.reference_id
