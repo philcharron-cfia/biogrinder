@@ -259,7 +259,3 @@ Biogrinder. If not, see http://www.gnu.org/licenses/.
 ## Bugs
 
 If you have any issues installing or running VariantDetective, or would like a new feature added to the tool, please open an issue here on GitHub.
-
-```
-git clone git://biogrinder.git.sourceforge.net/gitroot/biogrinder/biogrinder
-```
