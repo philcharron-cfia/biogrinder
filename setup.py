@@ -1,5 +1,8 @@
 from setuptools import setup, find_packages
 
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
+
 setup(
     name='biogrinder',
     version='0.1.0',
@@ -9,7 +12,7 @@ setup(
     url='https://github.com/philcharron-cfia/biogrinder',
     packages=find_packages(where='src'),
     package_dir={'': 'src'},
-    install_requires=[],
+    install_requires=requirements,
     entry_points={
         'console_scripts': [
             'biogrinder = src.main:main',
