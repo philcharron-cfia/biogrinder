@@ -1,7 +1,8 @@
 # This profile is used to generate Illumina reads used for amplicon sequencing
 coverage_fold 500
-read_dist 150 uniform 10
+read_dist 300 uniform 10
+insert_dist 650 uniform 50
+start_primers 1
 length_bias 0
 mutation_dist poly4 3e-3 3.3e-8
 homopolymer_dist margulies
-chimera_perc 1.56

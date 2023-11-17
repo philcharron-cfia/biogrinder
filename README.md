@@ -105,41 +105,47 @@ You can run Biogrinder using then command-line interface (CLI). see
 
 ## Examples
 
+An amplicon library using typical Illumina error rates
+
+```
+biogrinder --reference_file 16Sgenes.fna --forward_reverse 16Sprimers.fna --profile_file profile_illumina_amplicon.txt
+```
+
 A shotgun DNA library with a coverage of 0.1X
 
 ```
-biogrinder -reference_file genomes.fna -coverage_fold 0.1
+biogrinder --reference_file genomes.fna --coverage_fold 0.1
 ```
 
 Same thing but save the result files in a specific folder and with a specific
 name
 
 ```
-biogrinder -reference_file genomes.fna -coverage_fold 0.1 -base_name my_name -output_dir my_dir
+biogrinder --reference_file genomes.fna --coverage_fold 0.1 --base_name my_name --output_dir my_dir
 ```
 
 A DNA shotgun library with 1000 reads
 
 ```
-biogrinder -reference_file genomes.fna -total_reads 1000
+biogrinder --reference_file genomes.fna --total_reads 1000
 ```
 
 A DNA shotgun library where species are distributed according to a power law
 
 ```
-biogrinder -reference_file genomes.fna -abundance_model powerlaw 0.1
+biogrinder --reference_file genomes.fna --abundance_model powerlaw 0.1
 ```
 
 A DNA shotgun library with 123 genomes taken random from the given genomes
 
 ```
-biogrinder -reference_file genomes.fna -diversity 123
+biogrinder --reference_file genomes.fna --diversity 123
 ```
 
 Two DNA shotgun libraries that have 50% of the species in common
 
 ```
-biogrinder -reference_file genomes.fna -num_libraries 2 -shared_perc 50
+biogrinder --reference_file genomes.fna --num_libraries 2 --shared_perc 50
 ```
 
 Two DNA shotgun library with no species in common and distributed according to a
@@ -148,55 +154,55 @@ exponential model is omitted, each library uses a different randomly chosen
 value:
 
 ```
-biogrinder -reference_file genomes.fna -num_libraries 2 -abundance_model exponential
+biogrinder --reference_file genomes.fna --num_libraries 2 --abundance_model exponential
 ```
 
 A DNA shotgun library where species relative abundances are manually specified
 
 ```
-biogrinder -reference_file genomes.fna -abundance_file my_abundances.txt
+biogrinder --reference_file genomes.fna --abundance_file my_abundances.txt
 ```
 
 A DNA shotgun library with Sanger reads
 
 ```
-biogrinder -reference_file genomes.fna -read_dist 800 -mutation_dist linear 1 2 -mutation_ratio 80 20
+biogrinder --reference_file genomes.fna --read_dist 800 --mutation_dist linear 1 2 --mutation_ratio 80 20
 ```
 
 A DNA shotgun library with first-generation 454 reads
 
 ```
-biogrinder -reference_file genomes.fna -read_dist 100 normal 10 -homopolymer_dist balzer
+biogrinder --reference_file genomes.fna --read_dist 100 normal 10 --homopolymer_dist balzer
 ```
 
 A paired-end DNA shotgun library, where the insert size is normally distributed
 around 2.5 kbp and has 0.2 kbp standard deviation
 
 ```
-biogrinder -reference_file genomes.fna -insert_dist 2500 normal 200
+biogrinder --reference_file genomes.fna --insert_dist 2500 normal 200
 ```
 
 A transcriptomic dataset
 
 ```
-biogrinder -reference_file transcripts.fna
+biogrinder --reference_file transcripts.fna
 ```
 
 A unidirectional transcriptomic dataset
 
 ```
-biogrinder -reference_file transcripts.fna -unidirectional 1
+biogrinder --reference_file transcripts.fna --unidirectional 1
 ```
 
 A proteomic dataset
 
 ```
-biogrinder -reference_file proteins.faa -unidirectional 1
+biogrinder --reference_file proteins.faa --unidirectional 1
 ```
 
 A 16S rRNA amplicon library
 ```
-biogrinder -reference_file 16Sgenes.fna -forward_reverse 16Sprimers.fna -length_bias 0 -unidirectional 1
+biogrinder --reference_file 16Sgenes.fna --forward_reverse 16Sprimers.fna --length_bias 0 --unidirectional 1
 ```
 
 **Note:** the use of `-length_bias 0` because reference sequence length should
@@ -205,21 +211,21 @@ not affect the relative abundance of amplicons.
 The same amplicon library with 20% of chimeric reads (90% bimera, 10% trimera)
 
 ```
-biogrinder -reference_file 16Sgenes.fna -forward_reverse 16Sprimers.fna -length_bias 0 -unidirectional 1 -chimera_perc 20 -chimera_dist 90 10
+biogrinder --reference_file 16Sgenes.fna --forward_reverse 16Sprimers.fna --length_bias 0 --unidirectional 1 --chimera_perc 20 --chimera_dist 90 10
 ```
 
 Three 16S rRNA amplicon libraries with specified MIDs and no reference sequences
 in common
 
 ```
-biogrinder -reference_file 16Sgenes.fna -forward_reverse 16Sprimers.fna -length_bias 0 -unidirectional 1 -num_libraries 3 -multiplex_ids MIDs.fna
+biogrinder --reference_file 16Sgenes.fna --forward_reverse 16Sprimers.fna --length_bias 0 --unidirectional 1 --num_libraries 3 --multiplex_ids MIDs.fna
 ```
 
 Reading reference sequences from the standard input, which allows you to
 decompress FASTA files on the fly:
 
 ```
-zcat microbial_db.fna.gz | biogrinder -reference_file - -total_reads 100
+zcat microbial_db.fna.gz | biogrinder --reference_file - --total_reads 100
 ```
 
 ## CLI Output
@@ -228,7 +234,10 @@ For each shotgun or amplicon read library requested, the following files are
 generated:
 
 1. A rank-abundance file, tab-delimited, that shows the relative abundance of
-   the different reference sequences
+   the different reference sequences.
+1. A library summary file that shows details about the created library.
+1. If amplicon method is chosen rathen than shotguen, an amplicon summary file 
+   with details about amplicons that were identified.
 1. A file containing the read sequences in FASTA format. The read headers
    contain information necessary to track from which reference sequence each
    read was taken and what errors it contains. This file is not generated if

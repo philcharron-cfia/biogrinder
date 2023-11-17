@@ -1,3 +1,5 @@
+import os
+
 def diversity_report(num_libraries, perc_shared, perc_permuted, overall_diversity):
     """
     Print a diversity report detailing the overall genome diversity, the
@@ -26,7 +28,8 @@ def diversity_report(num_libraries, perc_shared, perc_permuted, overall_diversit
         print(f"Percent permuted = {perc_permuted:.1f} % ({nof_permuted} top genomes)")
     
 def library_report(cur_lib, alphabet, forward_reverse, ranks_file, fastq_file,
-                   fasta_file, qual_file, coverage, nof_seqs, diversity):
+                   fasta_file, qual_file, coverage, nof_seqs, diversity, outdir,
+                   basename, lib_num):
     coverage = "{:.1f}".format(coverage)
     lib_alphabet = alphabet.upper()
     
@@ -46,3 +49,49 @@ def library_report(cur_lib, alphabet, forward_reverse, ranks_file, fastq_file,
     print(f"   Library coverage     = {coverage} x")
     print(f"   Number of reads      = {nof_seqs}")
     print(f"   Diversity (richness) = {diversity}")
+
+
+    filename = os.path.join(outdir, f"{basename}{lib_num}-library_report.txt")
+    with open(filename, 'w') as out_file:
+        out_file.write(f"{lib_alphabet} {lib_type} library {cur_lib}:\n")
+        out_file.write(f"   Community structure  = {ranks_file}\n")
+        if fastq_file:
+            out_file.write(f"   FASTQ file           = {fastq_file}\n")
+        if fasta_file:
+            out_file.write(f"   FASTA file           = {fasta_file}\n")
+        if qual_file:
+            out_file.write(f"   QUAL file            = {qual_file}\n")
+        out_file.write(f"   Library coverage     = {coverage} x\n")
+        out_file.write(f"   Number of reads      = {nof_seqs}\n")
+        out_file.write(f"   Diversity (richness) = {diversity}\n")
+
+def amplicon_report(cur_lib, alphabet, amplicon_dict, outdir, basename, lib_num):
+    lib_alphabet = alphabet.upper()
+    
+    if "protein" in lib_alphabet.lower():
+        lib_alphabet = lib_alphabet.replace("protein", "Proteic", 1)
+
+    lib_type = 'amplicon'
+    
+    sorted_dict = {key: amplicon_dict[key] for key in sorted(amplicon_dict)}
+
+    print(f"{lib_alphabet} {lib_type} library {cur_lib} - amplicon summary:")
+    print("   Amplicon Name\tMatch Number\tAmplicon Size (bp)\tNumber of Reads")
+    for key, value in sorted_dict.items():
+        amp = key.split('reference=')[1]
+        amp_name = amp.split('_LEN')[0]
+        size = amp.split('_LEN')[1].split('_')[0]
+        amp_number = amp.split('_LEN')[1].split('_')[1]
+        print(f"   {amp_name}\t{amp_number}\t{size}\t{value}")
+
+    filename = os.path.join(outdir, f"{basename}{lib_num}-amplicon_report.txt")
+    with open(filename, 'w') as out_file:
+        out_file.write(f"{lib_alphabet} {lib_type} library {cur_lib} - amplicon summary:\n")
+        out_file.write("   Amplicon Name\tMatch Number\tAmplicon Size (bp)\tNumber of Reads\n")
+        for key, value in sorted_dict.items():
+            amp = key.split('reference=')[1]
+            amp_name = amp.split('_LEN')[0]
+            size = amp.split('_LEN')[1].split('_')[0]
+            amp_number = amp.split('_LEN')[1].split('_')[1]
+            out_file.write(f"   {amp_name}\t{amp_number}\t{size}\t{value}\n")
+      

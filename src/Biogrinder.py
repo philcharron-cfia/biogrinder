@@ -563,7 +563,7 @@ class Biogrinder:
             ref_seq.seq = str(ref_seq.seq).upper()
             # Extract amplicons if needed  
             if amplicon_search:
-                amplicon_result = amplicon_search.find_amplicons(ref_seq, primer_dict)
+                amplicon_result = amplicon_search.find_amplicons(ref_seq, primer_dict, maximum_length)
                 if len(amplicon_result) > 0:
                     for result in amplicon_result:
                         amp_seq = result.seq
@@ -1040,6 +1040,9 @@ class Biogrinder:
             # Calculate needed number of sequences based on desired coverage
             self.cur_total_reads, self.cur_coverage_fold = self.lib_coverage(c_struct)
             
+            if hasattr(self, 'mate_length') and self.mate_length:
+                if self.cur_total_reads % 2 != 0:
+                    self.cur_total_reads = self.cur_total_reads + 1
             # If chimeras are needed, update the kmer collection with sequence abundance
             kmer_col = self.chimera_kmer_col
             if kmer_col:
@@ -1137,7 +1140,7 @@ class Biogrinder:
             self.next_lib()
         
         self.cur_read += 1
-        
+
         if self.cur_read <= self.cur_total_reads:
             # Generate the next read
             if hasattr(self, 'mate_length') and self.mate_length:
@@ -1673,7 +1676,6 @@ class Biogrinder:
             # Shotgun reads start at a random position in the genome
             start = random.randint(0, len(seq_obj) - length)
 
-        
         # End position
         end = start + length - 1
         return start, end

@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 from Bio import SeqIO
 from Biogrinder import Biogrinder
@@ -52,24 +53,26 @@ def biogrinder(*args):
         # Write community structure file
         factory.write_community_structure(c_struct, out_ranks_file)
         
-
-
         # Library report
         reports.library_report(cur_lib, factory.alphabet, factory.forward_reverse,
                     out_ranks_file, out_fastq_file, out_fasta_file, out_qual_file,
                     factory.cur_coverage_fold, factory.cur_total_reads,
-                    factory.diversity[cur_lib-1])
+                    factory.diversity[cur_lib-1], factory.output_dir, factory.base_name, lib_str)
 
         # Generate shotgun or amplicon reads and write them to a file
         with (open(out_fastq_file, 'a') if out_fastq_file else nullcontext()) as fastq_file, \
             (open(out_fasta_file, 'a') if out_fasta_file else nullcontext()) as fasta_file, \
             (open(out_qual_file, 'a') if out_qual_file else nullcontext()) as qual_file:
 
+            amplicon_dict = {}
 
             while True:
                 read = factory.next_read()
                 if not read:
                     break
+                if factory.forward_reverse:
+                    amp_desc = re.search(r'.*(_rev)?_LEN\d+_\d+', read.description).group()
+                    amplicon_dict[amp_desc] = amplicon_dict.get(amp_desc, 0) + 1
                 if out_fastq_file:
                     SeqIO.write(read, fastq_file, "fastq")
                 if out_fasta_file:
@@ -80,7 +83,12 @@ def biogrinder(*args):
         if out_fastq_file: fastq_file.close()
         if out_fasta_file: fasta_file.close()
         if out_qual_file: qual_file.close()
-    
+        
+        # Amplicon report
+        if amplicon_dict != {}:
+            reports.amplicon_report(cur_lib, factory.alphabet, amplicon_dict,
+                                    factory.output_dir, factory.base_name, lib_str)
+
     return factory
 
 def main():

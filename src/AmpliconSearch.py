@@ -55,7 +55,7 @@ class AmpliconSearch:
         return sequences
 
 
-    def find_amplicons(self, sequence, primer_dict):
+    def find_amplicons(self, sequence, primer_dict, maximum_length):
         """Find amplicons given potentially degenerate primers."""
         primer_items = iter(primer_dict.items())
         #sequence = sequence.upper() 
@@ -76,7 +76,7 @@ class AmpliconSearch:
                     for match_R_rc in match_R_rc_array:
                         for r in match_R_rc:             
                             length = r[1] + r[2] - f[1]
-                            if length > 0:
+                            if length > 0 and length < maximum_length:
                                 barcode = sequence.id + "_" + primer_combo + "_LEN"  + str(length) + "_" + str(i)
                                 amplicon = Seq(sequence_str[f[1]:r[1]+r[2]])
                                 amplicon_r = SeqRecord(amplicon,
@@ -91,7 +91,7 @@ class AmpliconSearch:
                     for match_R in match_R_array:
                         for r in match_R:
                             length = f[1] + f[2] - r[1]
-                            if length > 0:
+                            if length > 0 and length < maximum_length:
                                 barcode = sequence.id + "_" + primer_combo + "_rev_LEN" + str(length) + "_" + str(i)
                                 #amplicons[combo_name] = sequence_str[r[1]:f[1]+f[2]]
                                 amplicon = Seq(sequence_str[r[1]:f[1]+f[2]])

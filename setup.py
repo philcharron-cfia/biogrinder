@@ -15,10 +15,10 @@ setup(
     install_requires=requirements,
     entry_points={
         'console_scripts': [
-            'biogrinder = src.main:main',
+            'biogrinder=main:main',
         ],
     },
     license='MIT',
     keywords='bioinformatics tools sequence-analysis',
-    python_requires='>=3.6'
+    python_requires='>=3.7'
 )
