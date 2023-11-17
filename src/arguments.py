@@ -156,7 +156,7 @@ def create_parser():
         type=int,
         default=10000,
         help=textwrap.dedent('''\
-            When using DNA amplicon sequencing, provide a maximum legnth for
+            When using DNA amplicon sequencing, provide a maximum length for
             amplicon size in bp.''')
     )
     shot_amp_params.add_argument(
@@ -424,10 +424,10 @@ def create_parser():
         default=[40, 10], 
         help=textwrap.dedent('''\
             Generate basic quality scores for the simulated reads. Good
-            residues are given a specified good score (e.g. 30) and residues
+            residues are given a specified good score (e.g. 40) and residues
             that are the result of an insertion or substitution are given a
             specified bad score (e.g. 10). Specify first the good score and
-            then the bad score on the command-line, e.g.: 30 10.''')    
+            then the bad score on the command-line, e.g.: 40 10.''')    
     )
     misc_params.add_argument(
         '-fq', '--fastq_output', 

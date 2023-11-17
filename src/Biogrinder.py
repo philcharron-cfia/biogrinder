@@ -732,6 +732,7 @@ class Biogrinder:
             self.chimera_dist = normalize(self.chimera_dist, self.chimera_dist_total)
             # Calculate cdf
             if self.chimera_perc:
+                self.chimera_perc = float(self.chimera_perc)
                 self.chimera_dist_cdf = self.proba_cumul(self.chimera_dist)
             else:
                 self.chimera_dist_cdf = None
@@ -983,8 +984,15 @@ class Biogrinder:
         Calculate number of sequences needed to reach a given coverage.
         If the number of sequences is provided, calculate the coverage.
         """
-        coverage = self.coverage_fold
-        nof_seqs = int(self.total_reads)
+        if self.coverage_fold is not None:
+            coverage = int(self.coverage_fold)
+        else:
+            coverage = None
+        if self.total_reads is not None:
+            nof_seqs = int(self.total_reads)
+        else:
+            nof_seqs = None
+
         read_length = int(self.read_length)
 
         # Calculate library length and size

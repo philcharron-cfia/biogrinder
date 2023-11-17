@@ -1,5 +1,6 @@
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
+import re
 
 class SimulatedRead(SeqRecord):
     def __init__(self, id, reference, start, end, strand, mid, alphabet, track, coord_style, qual_levels):
@@ -68,6 +69,7 @@ class SimulatedRead(SeqRecord):
         self.seq = Seq("".join(seq_list))
         # Store the error specs
         self._errors = error_specs
+        self.description = re.sub(r'(,$)','',self.description)
         self.letter_annotations["phred_quality"] = self.generate_quality_scores(self.seq, self.qual_levels, error_specs)
 
         return self._errors
@@ -77,7 +79,7 @@ class SimulatedRead(SeqRecord):
         desc = self.description 
             
         if 0 <= position < len(seq_list):  # Ensure position is within valid range
-            desc = desc + "," + str(position+1) + mut_type + seq_list[position]
+            desc = desc + str(position+1) + mut_type + seq_list[position] + ","
             if mut_type == '%':  # Substitution
                 seq_list[position] = value   
             elif mut_type == '+':  # Insertion
