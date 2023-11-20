@@ -35,7 +35,7 @@ class Test_17_Libraries(unittest.TestCase):
                 
     def test_multiple_paired_end_shotgun_libraries(self):
         factory = Biogrinder('-rf', current_dir + '/data/shotgun_database.fa',
-                             '-tr', '99',
+                             '-tr', '100',
                              '-rd', '48',
                              '-nl', '4',
                              '-id', '250')
@@ -49,7 +49,7 @@ class Test_17_Libraries(unittest.TestCase):
                 nof_reads += 1
                 ok_mate(read, None, nof_reads, nof_libs)
                 read = factory.next_read()
-            self.assertEqual(nof_reads, 99)
+            self.assertEqual(nof_reads, 100)
             lib = factory.next_lib()
         self.assertEqual(nof_libs, 4)
                                               
