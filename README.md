@@ -93,7 +93,7 @@ in a terminal:
 git clone https://github.com/philcharron-cfia/biogrinder.git
 cd biogrinder
 python -m pip install --upgrade pip
-pip install .
+pip install -e .
 # Test the installation
 python tests/run_tests.py
 ```
