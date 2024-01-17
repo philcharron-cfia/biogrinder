@@ -563,7 +563,8 @@ class Biogrinder:
             ref_seq.seq = str(ref_seq.seq).upper()
             # Extract amplicons if needed  
             if amplicon_search:
-                amplicon_result = amplicon_search.find_amplicons(ref_seq, primer_dict, maximum_length)
+                #amplicon_result = amplicon_search.find_amplicons(ref_seq, primer_dict, maximum_length)
+                amplicon_result = amplicon_search.find_amplicons_v2(ref_seq, primer_dict, maximum_length)
                 if len(amplicon_result) > 0:
                     for result in amplicon_result:
                         amp_seq = result.seq

@@ -101,7 +101,84 @@ class AmpliconSearch:
                                 amplicons.append(amplicon_r)
                                 i += 1
         return amplicons
+    
+    def find_amplicons_v2(self, sequence, primer_dict, maximum_length):
+        """Find amplicons given potentially degenerate primers."""
+        sequence_str = str(sequence.seq)
+        primer_lengths = []
+        for primers in primer_dict.values():
+            for seq in primers:
+                if len(str(seq)) not in primer_lengths:
+                    primer_lengths.append(len(seq))
+        
+        all_kmer_dicts = {}
+        for i in primer_lengths:
+            all_kmer_dicts[i] = self.build_seq_kmer_dictionary(sequence_str, i)
 
+        amplicons = []
+        primer_items = iter(primer_dict.items())
+        
+        for primer_name1, primer_seq1 in primer_items:
+            primer_name2, primer_seq2 = next(primer_items)
+            primer_combo = primer_name1 + "+" + primer_name2
+            primer_seq1_rc = [str(Seq(seq).reverse_complement()) for seq in primer_seq1]
+            primer_seq2_rc = [str(Seq(seq).reverse_complement()) for seq in primer_seq2]
+            match_F_array = [self.find_kmer_positions(F, all_kmer_dicts[len(F)]) for F in primer_seq1]
+            match_R_array = [self.find_kmer_positions(R, all_kmer_dicts[len(R)]) for R in primer_seq2]
+            match_F_rc_array = [self.find_kmer_positions(F, all_kmer_dicts[len(F)]) for F in primer_seq1_rc]
+            match_R_rc_array = [self.find_kmer_positions(R, all_kmer_dicts[len(R)]) for R in primer_seq2_rc]
+            i=0
+            for match_F in match_F_array:
+                for f in match_F:
+                    for match_R_rc in match_R_rc_array:
+                        for r in match_R_rc:
+                            length = r[0] + r[1] - f[0]
+                            if length > 0 and length < maximum_length:
+                                barcode = sequence.id + "_" + primer_combo + "_LEN"  + str(length) + "_" + str(i)
+                                amplicon = Seq(sequence_str[f[0]:r[0]+r[1]])
+                                amplicon_r = SeqRecord(amplicon,
+                                                       id = barcode,
+                                                       name = sequence.id)
+                                amplicons.append(amplicon_r)
+                                #amplicons[combo_name] = sequence_str[f[1]:r[1]+r[2]]
+                                i += 1
+            i=0            
+            for match_F_rc in match_F_rc_array:
+                for f in match_F_rc:
+                    for match_R in match_R_array:
+                        for r in match_R:
+                            length = f[0] + f[1] - r[0]
+                            if length > 0 and length < maximum_length:
+                                barcode = sequence.id + "_" + primer_combo + "_rev_LEN" + str(length) + "_" + str(i)
+                                #amplicons[combo_name] = sequence_str[r[1]:f[1]+f[2]]
+                                amplicon = Seq(sequence_str[r[0]:f[0]+f[1]])
+                                amplicon_r = SeqRecord(amplicon,
+                                                       id = barcode,
+                                                       name = sequence.id)
+                                amplicons.append(amplicon_r)
+                                i += 1
+        return amplicons
+        
+
+    def build_seq_kmer_dictionary(self, sequence, k):
+        """Builds a dictionary of k-mers from the genome sequence."""
+        kmer_dict = {}
+        for i in range(len(sequence) - k + 1):
+            kmer = sequence[i:i+k]
+            if kmer in kmer_dict:
+                kmer_dict[kmer].append(i)
+            else:
+                kmer_dict[kmer] = [i]
+        return kmer_dict
+
+    def find_kmer_positions(self, primer, kmer_dict):
+        """Finds positions of a k-mer in the genome."""
+        positions = kmer_dict.get(primer, [])
+        len_primer = len(primer)
+        position_len = []
+        for position in positions:
+            position_len.append([position, len_primer])
+        return position_len
 
 
     
