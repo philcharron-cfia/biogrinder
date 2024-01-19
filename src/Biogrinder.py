@@ -524,7 +524,10 @@ class Biogrinder:
         # Read FASTA file containing the primers   
         if forward_reverse_primers:
             amplicon_search = AmpliconSearch()
-            primer_dict = amplicon_search.create_deg_primer_dict(primer_file=forward_reverse_primers)
+            primer_dict = amplicon_search.create_deg_primer_dict(forward_reverse_primers)
+            if self.mismatch != '0':
+                primer_dict = amplicon_search.create_mismatch_primer_dict(primer_dict, self.mismatch)
+            print(primer_dict['F1'])
         else:
             amplicon_search = 0
 
@@ -587,6 +590,7 @@ class Biogrinder:
                         if ref_seq.id not in seq_ids:
                             seq_ids[ref_seq.id] = {}
                         seq_ids[ref_seq.id][result.id] = None
+                        
             else:
                 shotgun_seq = ref_seq.seq
                 # Remove forbidden chars

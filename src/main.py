@@ -70,9 +70,12 @@ def biogrinder(*args):
                 read = factory.next_read()
                 if not read:
                     break
+                
                 if factory.forward_reverse:
-                    amp_desc = re.search(r'.*(_rev)?_LEN\d+_\d+', read.description).group()
+                    amp_desc = re.search(r'.*(_rev)?_LEN\d+_START\d+_END\d+_FPRIMER[A-Z]+_RPRIMER[A-Z]+_\d+', read.name).group()
+                    #amp_desc = re.search(r'.*(_rev)?_LEN\d+_\d+', read.description).group()
                     amplicon_dict[amp_desc] = amplicon_dict.get(amp_desc, 0) + 1
+
                 if out_fastq_file:
                     SeqIO.write(read, fastq_file, "fastq")
                 if out_fasta_file:
@@ -83,7 +86,6 @@ def biogrinder(*args):
         if out_fastq_file: fastq_file.close()
         if out_fasta_file: fasta_file.close()
         if out_qual_file: qual_file.close()
-        
         # Amplicon report
         if amplicon_dict != {}:
             reports.amplicon_report(cur_lib, factory.alphabet, amplicon_dict,

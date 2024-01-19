@@ -76,22 +76,28 @@ def amplicon_report(cur_lib, alphabet, amplicon_dict, outdir, basename, lib_num)
     sorted_dict = {key: amplicon_dict[key] for key in sorted(amplicon_dict)}
 
     print(f"{lib_alphabet} {lib_type} library {cur_lib} - amplicon summary:")
-    print("   Amplicon Name\tMatch Number\tAmplicon Size (bp)\tNumber of Reads")
-    for key, value in sorted_dict.items():
-        amp = key.split('reference=')[1]
+    print("   Amplicon Name\tMatch Number\tStart\tEnd\tAmplicon Size (bp)\tPrimer 1\tPrimer 2\tNumber of Reads")
+    for amp, value in sorted_dict.items():
         amp_name = amp.split('_LEN')[0]
         size = amp.split('_LEN')[1].split('_')[0]
-        amp_number = amp.split('_LEN')[1].split('_')[1]
-        print(f"   {amp_name}\t{amp_number}\t{size}\t{value}")
+        start = amp.split('_START')[1].split('_')[0]
+        end = amp.split('_END')[1].split('_')[0]
+        fprimer = amp.split('_FPRIMER')[1].split('_')[0]
+        rprimer = amp.split('_RPRIMER')[1].split('_')[0]
+        amp_number = amp.split('_RPRIMER')[1].split('_')[1]
+        print(f"   {amp_name}\t{amp_number}\t{start}\t{end}\t{size}\t{fprimer}\t{rprimer}\t{value}")
 
     filename = os.path.join(outdir, f"{basename}{lib_num}-amplicon_report.txt")
     with open(filename, 'w') as out_file:
         out_file.write(f"{lib_alphabet} {lib_type} library {cur_lib} - amplicon summary:\n")
-        out_file.write("   Amplicon Name\tMatch Number\tAmplicon Size (bp)\tNumber of Reads\n")
-        for key, value in sorted_dict.items():
-            amp = key.split('reference=')[1]
+        out_file.write("   Amplicon Name\tMatch Number\tStart\tEnd\tAmplicon Size (bp)\tPrimer 1\tPrimer 2\tNumber of Reads\n")
+        for amp, value in sorted_dict.items():
             amp_name = amp.split('_LEN')[0]
             size = amp.split('_LEN')[1].split('_')[0]
-            amp_number = amp.split('_LEN')[1].split('_')[1]
-            out_file.write(f"   {amp_name}\t{amp_number}\t{size}\t{value}\n")
+            start = amp.split('_START')[1].split('_')[0]
+            end = amp.split('_END')[1].split('_')[0]
+            fprimer = amp.split('_FPRIMER')[1].split('_')[0]
+            rprimer = amp.split('_RPRIMER')[1].split('_')[0]
+            amp_number = amp.split('_RPRIMER')[1].split('_')[1]
+            out_file.write(f"   {amp_name}\t{amp_number}\t{start}\t{end}\t{size}\t{fprimer}\t{rprimer}\t{value}\n")
       

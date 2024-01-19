@@ -152,6 +152,16 @@ def create_parser():
             Default: %(default)s''')
     )
     shot_amp_params.add_argument(
+        '-mm', '--mismatch',
+        type=str,
+        choices=['0','1','2','3'],
+        default='0',
+        help=textwrap.dedent('''\
+            If running amplicon sequencing option, allow X number of mismatches
+            in primer sequence when findind match. Values can range from 0 to 3.
+            Default: %(default)s''')
+    )
+    shot_amp_params.add_argument(
         '-ml', '--maximum_length', 
         type=int,
         default=10000,

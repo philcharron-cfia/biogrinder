@@ -91,7 +91,6 @@ class SimulatedRead(SeqRecord):
 
 def new_subseq(fragnum, seq_feat, unidirectional, orientation, start, end, mid, alphabet,
                mate_number=None, lib_number=None, tracking=None, qual_levels=None):
-    
     # Adjust start and end if out of bounds
     start = max(0, start)
     end = min(len(seq_feat), end) + 1
@@ -128,6 +127,7 @@ def new_subseq(fragnum, seq_feat, unidirectional, orientation, start, end, mid, 
             #desc = amplicon_desc
             #desc = desc.replace("reference=", "reference=" + amplicon_desc)
             newseq.description = amplicon_desc
+    newseq.name = seq_feat.description
 
     return newseq
 
