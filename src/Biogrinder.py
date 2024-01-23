@@ -527,7 +527,6 @@ class Biogrinder:
             primer_dict = amplicon_search.create_deg_primer_dict(forward_reverse_primers)
             if self.mismatch != '0':
                 primer_dict = amplicon_search.create_mismatch_primer_dict(primer_dict, self.mismatch)
-            print(primer_dict['F1'])
         else:
             amplicon_search = 0
 
