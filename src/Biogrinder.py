@@ -11,6 +11,7 @@ import math
 import numpy as np
 import random
 import re
+import scipy.stats as st
 import sys
 
 class Biogrinder:
@@ -489,7 +490,7 @@ class Biogrinder:
 
     def database_create(self, fasta_file, unidirectional,
                         forward_reverse_primers=None, abundance_file=None,
-                        delete_chars=None, min_len=1, maximum_length=10000):
+                        delete_chars=None, min_len=1, maximum_length=5000):
         """
         Read and import sequences
         Parameters:
@@ -692,6 +693,18 @@ class Biogrinder:
         #    print(f"Warning: Could not find sequence with object ID '{oid}' in the database")
         return seq_obj
     
+    def draw_mix_gamma_dis(self, size, mean, seed):
+        half = int(size / 2)
+        # Generate samples from two different gamma distributions
+        gamma_dist_1 = st.gamma.rvs(6.3693711, 0.53834893, size=half, random_state=seed)
+        gamma_dist_2 = st.gamma.rvs(1.67638771, 0.22871401, size=(size - half), random_state=seed)
+        gamma_dist = np.concatenate((gamma_dist_1, gamma_dist_2))
+        # Scale the sample
+        gamma_dist = gamma_dist * mean / 4.39
+        # Convert to integers and clip between 1 and the length of the genome
+        gamma_dist = gamma_dist.astype(int)
+        return gamma_dist
+
     def initialize(self):
         # Parameter processing - read_dist
         if isinstance(self.read_dist, str):
@@ -699,7 +712,7 @@ class Biogrinder:
     
         self.read_length = is_int(self.read_dist[0] if len(self.read_dist) > 0 else 100)
         self.read_model = is_option(self.read_dist[1] if len(self.read_dist) > 1 else 'uniform',
-                                    ['uniform', 'normal'])
+                                    ['uniform', 'normal', 'mixed_gamma'])
         self.read_delta = is_int(self.read_dist[2] if len(self.read_dist) > 2 else 0)
         
         # Parameter processing - insert_dist
@@ -1199,7 +1212,6 @@ class Biogrinder:
                 genome = self.rand_seq_chimera(genome, self.chimera_perc, self.positions, oids)
 
             orientation = 1 if self.unidirectional != 0 else self.rand_seq_orientation()
-
             length = self.rand_seq_length(self.read_length, self.read_model, self.read_delta)
 
             max_length = len(genome) + len(mid)
@@ -1656,6 +1668,14 @@ class Biogrinder:
                 # Gaussian distribution: decimal number normally distribution in N(avg,stddev)
                 length = random.gauss(avg, stddev)
                 return max(1, int(length + 0.5))
+            elif model == 'mixed_gamma':
+                if hasattr(self, 'gamma_dist'):                     
+                    return self.gamma_dist[self.cur_read - 1]
+                else:
+                    self.gamma_dist = self.draw_mix_gamma_dis(self.cur_total_reads,
+                                                              avg,
+                                                              self.random_seed)        
+                    return self.gamma_dist[self.cur_read - 1]
             else:
                 raise ValueError(f"Error: '{model}' is not a supported read or insert length distribution")
 
