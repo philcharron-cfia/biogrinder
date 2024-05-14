@@ -552,6 +552,7 @@ class Biogrinder:
             if ids_to_keep and ref_seq.id not in ids_to_keep:
                 continue
             # If we are sequencing from the reverse strand, reverse complement now
+            
             if unidirectional == -1:
                 if self.alphabet == "dna":
                     ref_seq = SeqRecord(ref_seq.seq.reverse_complement(),
@@ -604,8 +605,8 @@ class Biogrinder:
                 if len(shotgun_seq) < min_len:
                     continue
                 # Skip the sequence if it is too long
-                if len(shotgun_seq) > maximum_length:
-                    continue
+                #if len(shotgun_seq) > maximum_length:
+                #    continue
                 #barcode = ref_seq.id + "_" + primer_id
                 ref_seq.seq = shotgun_seq
                 seq_db.append(ref_seq)
