@@ -209,7 +209,7 @@ class Biogrinder:
             i = 0
             while i < len(id_list):
                 id = id_list[i]
-                ab = int(abs[comm_num][i])
+                ab = float(abs[comm_num][i])
                 if not seq_ids or id in seq_ids:
                     totals[comm_num] += ab
                     i += 1
